@@ -1,0 +1,2 @@
+attack,baseline_strength,baseline_onset,baseline_risk,evasive_strength,evasive_onset,evasive_risk,evasion_gap
+rng_manipulation,1.0,0.4,0.5454029716409949,1.0059432656626657,0.7,0.4045510143669308,0.14085195727406413

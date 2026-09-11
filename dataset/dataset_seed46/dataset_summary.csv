@@ -1,0 +1,6 @@
+split,blinding,intercept_resend,intercept_resend+rng_manipulation,normal,pns,pns+blinding,pns+time_shift,rng_manipulation,time_shift,trojan_horse,trojan_horse+time_shift
+test_composite,0,0,1200,1200,0,1200,1200,0,0,0,1200
+test_physical_shift,1200,1200,0,1200,1200,0,0,0,0,0,0
+test_zeroday,0,0,0,1200,0,0,0,1200,1200,1200,0
+train,4800,4800,0,4800,4800,0,0,0,0,0,0
+val,1200,1200,0,1200,1200,0,0,0,0,0,0

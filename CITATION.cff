@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software or the QKD-TRACE benchmark, please cite it as below."
+title: "Q-TRACE: Physics-Informed Quantum Machine Learning for Zero-Day Threat Detection in Practical QKD"
+type: software
+authors:
+  - name: "Q-TRACE Project Contributors"
+repository-code: "https://github.com/YOUR_USERNAME/Q-TRACE"
+license: MIT
+version: "0.1.0"
+date-released: "2026-09-10"
+keywords:
+  - quantum key distribution
+  - quantum machine learning
+  - anomaly detection
+  - implementation security
+  - zero-day detection

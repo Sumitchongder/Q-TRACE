@@ -1,0 +1,2 @@
+attack,baseline_strength,baseline_onset,baseline_risk,evasive_strength,evasive_onset,evasive_risk,evasion_gap
+intercept_resend,1.0,0.4,0.5978107655597903,0.20362808509275537,0.1,0.3144569236904068,0.2833538418693835

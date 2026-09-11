@@ -1,0 +1,77 @@
+# ============================================================
+# Q-TRACE .gitignore
+# ============================================================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# ---- Virtual environments ----
+.env
+.venv
+env/
+venv/
+ENV/
+
+# ---- OS junk ----
+.DS_Store
+Thumbs.db
+
+# ---- Editors ----
+.vscode/
+.idea/
+*.swp
+
+# ============================================================
+# Generated / reproducible artifacts -- NEVER commit these.
+# Every file below is regenerated deterministically by a single
+# documented command in README.md ("Reproducibility" section) from
+# a fixed --seed. Committing them would bloat git history with
+# multi-hundred-MB binary/CSV diffs on every regeneration, which is
+# considered bad practice for research-code repositories.
+# ============================================================
+
+# Full per-seed generated datasets (telemetry CSVs + temporal-block
+# .npz files can each be 15-20 MB; regenerate via:
+#   python -m dataset.generate --out dataset/<name> --seed <N> ...
+dataset/*/qkd_trace_telemetry.csv
+dataset/*/qkd_trace_temporal_blocks.npz
+# dataset_summary.csv files ARE kept and version-controlled -- they
+# are a few hundred bytes each and useful as a quick reference of
+# what was generated without needing to regenerate anything.
+
+# Smoke-test / throwaway outputs (produced by --smoke flags; never
+# represent reported results, see README.md "Reproducibility")
+results_multiseed_test/
+*_smoke_test/
+results_test/
+
+# IBM Quantum credentials cache -- never commit real account info
+qiskit_ibm_runtime_account.json
+.qiskit/
+*.token
+
+# Large ad-hoc scratch outputs from manual experimentation, if any
+*.ipynb_checkpoints

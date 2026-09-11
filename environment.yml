@@ -1,0 +1,22 @@
+name: qgss
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy>=1.26,<3.0
+  - scipy>=1.11
+  - pandas>=2.0
+  - scikit-learn>=1.4
+  - matplotlib>=3.8
+  - jupyter
+  - notebook
+  - pip
+  - pip:
+      - xgboost>=2.0
+      - qiskit==2.5.2
+      - qiskit-aer==0.17.2
+      - qiskit-machine-learning==0.9.1
+      - qiskit-ibm-runtime==0.49.0
+      - qiskit-algorithms==0.4.0
+      # - torch  # install separately if you want real LSTM/GRU/TCN/deep-AE baselines

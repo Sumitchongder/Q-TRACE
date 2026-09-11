@@ -1,0 +1,7 @@
+,SKRR,attack_detected_rate,attack_missed_rate,normal_gated_rate,n_attack_windows,n_normal_windows
+Q-TRACE (top-decile),0.9155440490113197,0.1125,0.8875,0.0625,3600.0,1200.0
+Q-TRACE (50% recall target),0.5755375953679669,0.5,0.5,0.32666666666666666,3600.0,1200.0
+Q-TRACE (80% recall target),0.31558597338545996,0.8,0.19999999999999996,0.5808333333333333,3600.0,1200.0
+Q-TRACE (95% recall target),0.09486966784649177,0.95,0.050000000000000044,0.8675,3600.0,1200.0
+Static QBER Threshold,1.0,0.0,1.0,0.0,3600.0,1200.0
+No Detection (baseline),1.0,0.0,1.0,0.0,3600.0,1200.0

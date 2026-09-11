@@ -1,0 +1,7 @@
+,0
+Q-TRACE (top-decile),0.8735367868395816
+Q-TRACE (50% recall target),0.5102352851799365
+Q-TRACE (80% recall target),0.21588916118249415
+Q-TRACE (95% recall target),0.05251409853292607
+Static QBER Threshold,1.0
+No Detection (baseline),1.0

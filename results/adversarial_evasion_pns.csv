@@ -1,0 +1,2 @@
+attack,baseline_strength,baseline_onset,baseline_risk,evasive_strength,evasive_onset,evasive_risk,evasion_gap
+pns,1.0,0.4,0.6692526403775052,0.15,0.328273231582787,0.2948338430172387,0.3744187973602665

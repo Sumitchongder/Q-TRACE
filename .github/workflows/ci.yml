@@ -1,0 +1,74 @@
+name: CI
+
+# Continuous integration for Q-TRACE. Runs on every push and pull
+# request against main. This does NOT run the full-scale experiments
+# (those take hours and need a real dataset) -- it runs the fast
+# `--smoke` correctness checks that exercise the identical code paths
+# used for reported results, catching import errors, API breakage from
+# dependency updates, and integration bugs before they reach main.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    name: Lint (flake8)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install lint tools
+        run: pip install flake8
+      - name: Run flake8 (errors only -- style warnings are non-blocking)
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+  smoke-test:
+    name: Smoke test (${{ matrix.script }})
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        script:
+          - dataset-generate
+          - run-experiments
+          - run-sweep
+          - run-adversarial-evasion
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate a tiny smoke-test dataset
+        if: matrix.script == 'dataset-generate'
+        run: |
+          python -m dataset.generate --out dataset/ci_smoke \
+            --runs-per-class 3 --windows-per-run 20 --block-size 10 --seed 1
+
+      - name: Smoke test run_experiments.py
+        if: matrix.script == 'run-experiments'
+        run: |
+          python -m dataset.generate --out dataset/ci_smoke \
+            --runs-per-class 3 --windows-per-run 20 --block-size 10 --seed 1
+          python -m evaluation.run_experiments \
+            --data dataset/ci_smoke/qkd_trace_telemetry.csv \
+            --block-size 10 --n-qubits 4 --smoke --out results_ci
+
+      - name: Smoke test run_sweep_experiment.py
+        if: matrix.script == 'run-sweep'
+        run: python -m evaluation.run_sweep_experiment --smoke --out results_ci
+
+      - name: Smoke test run_adversarial_evasion.py
+        if: matrix.script == 'run-adversarial-evasion'
+        run: python -m evaluation.run_adversarial_evasion --attack pns --smoke --out results_ci

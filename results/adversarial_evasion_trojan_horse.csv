@@ -1,0 +1,2 @@
+attack,baseline_strength,baseline_onset,baseline_risk,evasive_strength,evasive_onset,evasive_risk,evasion_gap
+trojan_horse,1.0,0.4,0.6492292304331942,0.3792745095654673,0.4656744405128427,0.29410125868371123,0.355127971749483

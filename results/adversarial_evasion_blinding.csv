@@ -1,0 +1,2 @@
+attack,baseline_strength,baseline_onset,baseline_risk,evasive_strength,evasive_onset,evasive_risk,evasion_gap
+blinding,1.0,0.4,0.7185831267110195,0.15,0.1502707308766082,0.2288248062976859,0.48975832041333367

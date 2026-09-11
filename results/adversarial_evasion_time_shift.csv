@@ -1,0 +1,2 @@
+attack,baseline_strength,baseline_onset,baseline_risk,evasive_strength,evasive_onset,evasive_risk,evasion_gap
+time_shift,1.0,0.4,0.6204578960303507,0.5261791249556138,0.2656064544220835,0.2796285596057774,0.3408293364245733
