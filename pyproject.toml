@@ -29,9 +29,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/YOUR_USERNAME/Q-TRACE"
-Repository = "https://github.com/YOUR_USERNAME/Q-TRACE"
-Changelog = "https://github.com/YOUR_USERNAME/Q-TRACE/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/Sumitchongder/Q-TRACE"
+Repository = "https://github.com/Sumitchongder/Q-TRACE"
+Changelog = "https://github.com/Sumitchongder/Q-TRACE/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["qkd_simulator*", "attacks*", "models*", "quantum*", "evaluation*", "dataset*"]

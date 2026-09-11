@@ -1,6 +1,6 @@
 # Q-TRACE
 
-[![CI](https://github.com/YOUR_USERNAME/Q-TRACE/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/Q-TRACE/actions/workflows/ci.yml)
+[![CI](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml/badge.svg)](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 [![Qiskit](https://img.shields.io/badge/Qiskit-2.5.2-6929C4.svg)](https://www.ibm.com/quantum/qiskit)

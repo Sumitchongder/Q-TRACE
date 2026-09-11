@@ -4,7 +4,7 @@ title: "Q-TRACE: Physics-Informed Quantum Machine Learning for Zero-Day Threat D
 type: software
 authors:
   - name: "Q-TRACE Project Contributors"
-repository-code: "https://github.com/YOUR_USERNAME/Q-TRACE"
+repository-code: "https://github.com/Sumitchongder/Q-TRACE"
 license: MIT
 version: "0.1.0"
 date-released: "2026-09-10"
