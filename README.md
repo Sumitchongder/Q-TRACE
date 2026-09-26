@@ -197,8 +197,7 @@ Both scripts also accept `--smoke` for a fast correctness check.
 
 ### Multi-seed runs (error bars for your comparison table)
 
-A single seed's AUROC is a point estimate — a Q1 reviewer will ask for
-variance across independent draws. `evaluation/run_multiseed.py` repeats
+A single seed's AUROC is a point estimate. `evaluation/run_multiseed.py` repeats
 the **entire** pipeline (fresh dataset generation AND model training) across
 N seeds and aggregates each `(split, model, metric)` cell into mean +/- std:
 
