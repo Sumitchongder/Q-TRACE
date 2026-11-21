@@ -1,0 +1,17 @@
+\begin{tabular}{lcccc}
+\toprule
+Method & bound $<1$ & bound 1--10 & bound 10--100 & bound $>100$ \\
+\midrule
+\textbf{Q-TRACE} & \textbf{93.7} & \textbf{25.4} & \textbf{7.8} & \textbf{2.6} \\
+XGBoost (sup.) & 62.0 & 6.4 & 1.8 & 0.3 \\
+QBER CUSUM & 31.7 & 3.4 & 1.8 & 1.0 \\
+Decoy CUSUM & 2.6 & 0.0 & 0.0 & 0.0 \\
+QBER static & 19.9 & 13.6 & 11.5 & 10.9 \\
+Autoencoder & 3.7 & 0.0 & 0.0 & 0.0 \\
+Isolation forest & 4.1 & 0.0 & 0.0 & 0.3 \\
+One-class SVM & 0.0 & 0.0 & 0.0 & 0.0 \\
+QK one-class SVM & 6.7 & 6.1 & 4.6 & 8.6 \\
+\midrule
+Attack runs & 492 & 264 & 217 & 302 \\
+\bottomrule
+\end{tabular}

@@ -18,7 +18,7 @@ tooling, and new experiment scripts are very welcome with a lower bar.
    If you touch `evaluation/metrics.py`, `models/qtrace_detector.py`,
    `qkd_simulator/`, or `attacks/`, run at least one non-trivial-scale
    experiment (not just `--smoke`) and sanity-check that the resulting
-   numbers are physically plausible before opening a PR -- see the
+   numbers are physically plausible before opening a PR; see the
    README's "Known-issue changelog" section for two real examples of
    bugs that ran without crashing but produced methodologically invalid
    numbers.

@@ -1,0 +1,26 @@
+# QKD-TRACE v2 benchmark: canonical configuration used for the paper.
+# Development used seeds 0-3 only; the reported results use seeds 101-105,
+# which played no role in any design or tuning decision.
+seeds: [101, 102, 103, 104, 105]
+n_windows: 200            # telemetry windows per link
+n_cal: 60                 # attack-free commissioning windows
+pulses_per_window: 10000000   # 1 s windows at 10 MHz
+onset_range: [20, 100]    # attack onset, windows after commissioning
+afterpulse_spec_error: 0.10
+false_alarm_rates: [0.001, 0.01]
+runs:
+  train_honest: 60
+  train_attack: 30        # per known family (supervised baseline only)
+  val_honest: 50
+  val_loss_fault: 25
+  test_honest: 50
+  test_loss_fault: 25
+  test_device_fault: 15
+  test_attack: 35         # per family
+  test_composite: 20      # per composition
+  shift_honest: 25
+  shift_attack: 15        # per known family
+detector:
+  horizons: [1, 4, 16]
+  local_horizons: [4, 16, 32]
+  local_reference: 48

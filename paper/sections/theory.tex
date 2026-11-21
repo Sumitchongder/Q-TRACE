@@ -1,0 +1,58 @@
+\section{Detectability limits}\label{sec:theory}
+
+The honest-manifold formulation answers a question that a trained classifier cannot: how detectable is a given attack from telemetry, irrespective of the monitor?
+
+\begin{definition}[Detectability exponent]\label{def:dstar}
+Let $Q$ be the per-pulse distribution over settings and outcomes produced by an attack on a link with device parameters $\psi$, and $\Mhon_\psi$ the honest manifold \eqref{eq:manifold}. The detectability exponent of the attack is
+\begin{equation}
+\Dstar(Q)=\inf_{\eta\in(0,1]}\KL\bigl(Q\,\Vert\,P_{\psi,\eta}\bigr)\qquad\text{nats per pulse}. \label{eq:dstar}
+\end{equation}
+\end{definition}
+
+$\Dstar$ is a property of the attack and the link alone. It measures the information per pulse that separates the attacked statistics from their closest honest explanation, where closeness is measured by the Kullback--Leibler divergence \cite{KullbackLeibler1951,CoverThomas2006}. For time-modulated attacks we average the divergence over one modulation period.
+
+\begin{proposition}[Universal delay bound]\label{prop:lorden}
+Consider windows of $N$ pulses that are i.i.d.\ given the link state, and let $\tau$ be the alarm time of any monitor whose average run length to false alarm is at least $\gamma$ under every honest state $P_{\psi,\eta}$, $\eta\in(0,1]$. Let $\eta^\ast$ attain the infimum in \eqref{eq:dstar}. If the link is honest at $\eta^\ast$ before the change, the worst-case mean detection delay satisfies
+\begin{equation}
+\sup_{\nu\ge1}\ \operatorname*{ess\,sup}\ \E_\nu\bigl[(\tau-\nu+1)^+\,\big\vert\,\mathcal{F}_{\nu-1}\bigr]\ \ge\ \bigl(1+o(1)\bigr)\,\frac{\log\gamma}{N\,\Dstar(Q)}\qquad(\gamma\to\infty), \label{eq:lorden}
+\end{equation}
+where $\nu$ is the change time and $\mathcal{F}_{\nu-1}$ the history before it.
+\end{proposition}
+\begin{proof}
+A monitor that controls false alarms under every honest state controls them in particular under $P^{(N)}_{\psi,\eta^\ast}$, the law of one window at $\eta^\ast$. The change from $P^{(N)}_{\psi,\eta^\ast}$ to $Q^{(N)}$ is then a simple change between two known distributions whose per-window divergence is $\KL(Q^{(N)}\Vert P^{(N)}_{\psi,\eta^\ast})=N\,\Dstar(Q)$ by additivity of the divergence over independent pulses. Lorden's lower bound for simple changes \cite{Lorden1971}, in the general form of Lai \cite{Lai1998}, gives \eqref{eq:lorden}. Additional uncertainty about the pre-change state can only increase the delay.
+\end{proof}
+
+In the benchmark we control the per-window false-alarm probability $\alpha$ rather than the run length and plot the delay against $\log(1/\alpha)/(N\Dstar)$, which plays the role of the bound with $\gamma\approx1/\alpha$. The bound is asymptotic and concerns the worst-case mean delay; individual runs can fall below it. Two consequences make it useful in practice. First, it separates the performance of a monitor from the intrinsic visibility of an attack: a monitor whose delay tracks the bound cannot be improved by any other representation of the same telemetry, classical or quantum. Second, it exposes attacks that no monitor can see.
+
+\begin{proposition}[Telemetry-blind attacks]\label{prop:blind}
+$\Dstar(Q)=0$ if and only if $Q$ lies in the closure of $\Mhon_\psi$. In particular, a Trojan-horse probe whose back-reflection does not reach Bob ($q_{\rm bs}=0$ in \cref{sec:attacks}) has $\Dstar=0$, and for any monitor operating on the receiver telemetry of \cref{sec:settings} the probability of an alarm under this attack equals its false-alarm probability.
+\end{proposition}
+\begin{proof}
+The divergence is non-negative and vanishes only for identical distributions; on the compact closure of $\{\eta\in(0,1]\}$ the infimum is attained, which gives the equivalence. The filtered Trojan-horse probe acts only on Alice's modulators: settings are drawn with the honest probabilities and Bob's outcome probabilities are those of $P_{\psi,\eta}$ at the true transmittance, so $Q=P_{\psi,\eta}$ exactly. The telemetry then has the same law with and without the attack, and any function of it, including any alarm rule, has the same law too.
+\end{proof}
+
+\Cref{prop:blind} is a statement about information, not about the shortcomings of a particular monitor. Attacks with $\Dstar=0$ must be excluded by device measures such as optical isolation and power monitoring \cite{Lucamarini2015,Ponosova2022}, or priced into the key rate. We verified in the benchmark that the numerically computed $\Dstar$ of the filtered probe is zero to machine precision.
+
+\subsection{Local form and connection to the score test}\label{sec:local}
+
+For weak attacks the divergence has a geometric form that connects \cref{def:dstar} to the score test of \cref{sec:score}.
+
+\begin{proposition}[Local expansion]\label{prop:local}
+Let $P_{\psi,\eta}$ be smooth in $\vartheta=(\vartheta_\psi,\log\eta)$ with Fisher information $J$ per pulse, and let the attack act locally along the device directions, $Q=P_{\vartheta_0+\epsilon h}$ with $h=(h_\psi,h_\eta)$. Then
+\begin{equation}
+\Dstar(Q)=\tfrac12\,\epsilon^2\,h_\psi\tr\bigl(J_{\psi\psi}-J_{\psi\eta}J_{\eta\eta}^{-1}J_{\eta\psi}\bigr)h_\psi+O(\epsilon^3). \label{eq:localdstar}
+\end{equation}
+\end{proposition}
+\begin{proof}
+For nearby members of a smooth family, $\KL(P_{\vartheta_0+\epsilon h}\Vert P_{\vartheta_0+\epsilon h'})=\tfrac12\epsilon^2(h-h')\tr J(h-h')+O(\epsilon^3)$. Minimising over the nuisance component $h'_\eta$ with $h'_\psi=0$ is a weighted least-squares problem whose solution $h'_\eta=h_\eta+J_{\eta\eta}^{-1}J_{\eta\psi}h_\psi$ leaves the Schur complement in \eqref{eq:localdstar}.
+\end{proof}
+
+The matrix in \cref{eq:localdstar} is the per-pulse efficient information \eqref{eq:effscore}. Hence, for attacks inside the span of the probe directions, the noncentrality of the score statistic after $m$ windows is $2mN\Dstar$, and the score test attains the delay bound up to the multiple-testing cost of the nine directions. Attacks outside the span still have $\Dstar>0$ if they leave the manifold; they are caught by the omnibus channel, at the price of more degrees of freedom.
+
+\paragraph{A closed-form check.} For the RNG attack the outcome distribution is unchanged and the allocation of bit values is Bernoulli with parameter $\tfrac12+x$, $x=\delta\sin(2\pi t/T+\phi)$. Since $\KL(\mathrm{Bern}(\tfrac12+x)\Vert\mathrm{Bern}(\tfrac12))=2x^2+O(x^4)$ nats and the period average of $\sin^2$ is $1/2$,
+\begin{equation}
+\Dstar_{\rm RNG}=\delta^2+O(\delta^4). \label{eq:rngdstar}
+\end{equation}
+For $\delta=3\times10^{-4}$ the numerical evaluation of \cref{eq:dstar} on the full model gives $9.000\times10^{-8}$ nats per pulse, in agreement with $\delta^2$; with $N=10^7$ pulses per window and $\alpha=10^{-3}$ the delay bound is $\log(10^3)/0.9\approx7.7$ windows.
+
+\paragraph{Interpretation for an adaptive adversary.} An eavesdropper who knows that \qtrace{} is in place wants to maximise her information subject to keeping $\Dstar$ small. \Cref{prop:lorden} turns this into a quantitative trade-off: she can remain undetected for about $\log(1/\alpha)/(N\Dstar)$ windows, during which she learns a number of key bits proportional to that time. The exponent is therefore the natural currency in which attack strength should be reported; \cref{sec:hw-info} measures the corresponding quantity, information leaked before the first alarm, on hardware.

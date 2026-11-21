@@ -1,0 +1,15 @@
+\begin{tabular}{lccccccccc}
+\toprule
+Family & \rotatebox{70}{Q-TRACE} & \rotatebox{70}{XGBoost (sup.)} & \rotatebox{70}{QBER CUSUM} & \rotatebox{70}{Decoy CUSUM} & \rotatebox{70}{QBER static} & \rotatebox{70}{Autoencoder} & \rotatebox{70}{Isolation forest} & \rotatebox{70}{One-class SVM} & \rotatebox{70}{QK one-class SVM} \\
+\midrule
+Intercept-resend & \textbf{80.6} & 80.6 & 78.3 & 2.9 & 36.6 & 6.3 & 9.1 & 0.0 & 7.4 \\
+PNS & \textbf{62.9} & 46.9 & 1.7 & 4.6 & 1.7 & 2.9 & 1.7 & 0.0 & 3.4 \\
+Blinding & \textbf{47.4} & 26.3 & 1.7 & 0.0 & 1.1 & 0.0 & 0.0 & 0.0 & 6.3 \\
+Time-shift & \textbf{24.0} & 0.6 & 0.6 & 0.0 & 2.9 & 0.0 & 0.6 & 0.0 & 6.9 \\
+Trojan horse & 2.9 & 0.6 & 1.1 & 0.0 & 1.1 & 0.0 & 0.6 & 0.0 & \textbf{5.7} \\
+RNG bias & \textbf{57.1} & 0.6 & 2.3 & 0.0 & 1.1 & 0.0 & 0.0 & 0.0 & 7.4 \\
+PNS + blinding & \textbf{81.0} & 57.0 & 1.0 & 1.0 & 2.0 & 2.0 & 6.0 & 0.0 & 3.0 \\
+Time-shift + Trojan & \textbf{29.0} & 3.0 & 0.0 & 0.0 & 1.0 & 0.0 & 0.0 & 0.0 & 6.0 \\
+IR + RNG bias & \textbf{86.0} & 67.0 & 62.0 & 0.0 & 32.0 & 2.0 & 9.0 & 0.0 & 4.0 \\
+\bottomrule
+\end{tabular}

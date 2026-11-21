@@ -1,0 +1,96 @@
+\section{A count-level model of the decoy-state receiver}\label{sec:model}
+
+\subsection{Settings, outcomes and telemetry}\label{sec:settings}
+
+Each transmitted pulse carries a \emph{setting} $s=(k,a,\alpha,\beta)$: the intensity class $k\in\{\mathrm{s},\mathrm{d},\mathrm{v}\}$ (signal, decoy, vacuum) with means $\mu_\mathrm{s}>\mu_\mathrm{d}>\mu_\mathrm{v}=0$, Alice's bit $a\in\{0,1\}$, Alice's basis $\alpha$ and Bob's basis $\beta$. Settings are drawn independently with probabilities
+\begin{equation}
+\pi_s = p_k\,p_a\,p_\alpha\,p_\beta, \label{eq:settingprob}
+\end{equation}
+so there are $3\times2\times2\times2=24$ settings. Bob's passive receiver has two threshold detectors, $D_0$ and $D_1$, encoding bit values; a pulse produces one of four \emph{outcomes} $o\in\{\varnothing,D_0,D_1,D_{01}\}$ (no click, a click on one detector, or a double click). After sifting and error correction Alice and Bob know, for each telemetry window of $N$ pulses, the full table of counts $n_{s,o}$, 96 numbers in total. The error count of the sifted key is revealed exactly by error correction, and the outcomes of decoy, vacuum and basis-mismatched rounds are discarded from the key anyway, so publishing them costs no key. Double clicks are assigned a uniformly random bit (squashing), which is the standard convention in security proofs.
+
+Conditioned on the allocation $N_s=\sum_o n_{s,o}$, the outcome counts of setting $s$ are multinomial,
+\begin{equation}
+(n_{s,o})_o \sim \mathrm{Mult}\bigl(N_s;\,(p_{o\mid s})_o\bigr), \qquad (N_s)_s \sim \mathrm{Mult}\bigl(N;\,(\pi_s)_s\bigr). \label{eq:mult}
+\end{equation}
+The log-likelihood of a window therefore separates into an outcome part and an allocation part,
+\begin{equation}
+\ell = \sum_{s,o} n_{s,o}\log p_{o\mid s} + \sum_s N_s \log \pi_s + \text{const}, \label{eq:loglik}
+\end{equation}
+and the monitor of \cref{sec:detector} uses both.
+
+\subsection{Threshold detectors and photon-number-dependent channels}\label{sec:threshold}
+
+Let $S_j$ denote the probability that detector $j$ stays silent and $S_{01}$ the probability that both stay silent. Inclusion--exclusion gives the four outcome probabilities
+\begin{equation}
+p_{\varnothing}=S_{01},\quad p_{D_0}=S_1-S_{01},\quad p_{D_1}=S_0-S_{01},\quad p_{D_{01}}=1-S_0-S_1+S_{01}. \label{eq:outcomes}
+\end{equation}
+To compute the silence probabilities, suppose that $n$ photons leave Alice and $n'$ of them reach Bob. Each arriving photon is routed to detector $j$ and fires it with probability $\varpi_j$, independently of the others, where
+\begin{equation}
+\varpi_j(a,\alpha,\beta) = \eta_B\, w_j(a,\alpha,\beta)\, d_j,\qquad
+w_j = \begin{cases} 1-e_\beta & j=a,\ \alpha=\beta,\\ e_\beta & j\neq a,\ \alpha=\beta,\\ 1/2 & \alpha\neq\beta,\end{cases} \label{eq:routing}
+\end{equation}
+with $\eta_B$ the receiver efficiency, $e_\beta$ the optical misalignment of basis $\beta$, $d_0=1$ and $d_1=\kappa$ the efficiency of $D_1$ relative to $D_0$. Firing events of different photons at the same detector are not mutually exclusive, but routing of a single photon is; hence, given $n'$ arriving photons,
+\begin{equation}
+\Pr(D_j\ \text{silent}\mid n') = (1-\varpi_j)^{n'},\qquad \Pr(\text{both silent}\mid n') = (1-\varpi_0-\varpi_1)^{n'}.
+\end{equation}
+Background clicks (dark counts) occur independently with probability $p_{dj}$ per gate. Averaging over the channel with the \emph{arrival generating function} $G_n(z)=\E[z^{n'}\mid n]$ and over the photon-number distribution $P(n)$ of the source yields the exact expressions
+\begin{equation}
+S_j = (1-p_{dj})\sum_{n\ge0}P(n)\,G_n(1-\varpi_j),\qquad
+S_{01} = (1-p_{d0})(1-p_{d1})\sum_{n\ge0}P(n)\,G_n(1-\varpi_0-\varpi_1). \label{eq:silence}
+\end{equation}
+\Cref{eq:outcomes,eq:routing,eq:silence} hold for any channel that acts on photon numbers, including the photon-number-splitting channel of \cref{sec:attacks}.
+
+\begin{proposition}[Poissonian source, lossy channel]\label{prop:poisson}
+For a phase-randomised coherent source of mean $\mu$, $P(n)=e^{-\mu}\mu^n/n!$, and a memoryless channel of transmittance $t$, $G_n(z)=(1-t+tz)^n$, and
+\begin{equation}
+S_j=(1-p_{dj})\exp\!\bigl(-\mu\eta\, w_j d_j\bigr),\qquad S_{01}=S_0\,S_1, \label{eq:poisson}
+\end{equation}
+with $\eta=t\eta_B$; in particular the two detectors fire independently.
+\end{proposition}
+\begin{proof}
+$\sum_n e^{-\mu}\mu^n(1-t+tz)^n/n! = \exp[-\mu t(1-z)]$. Substituting $z=1-\varpi_j$ gives $\exp(-\mu t\varpi_j)=\exp(-\mu\eta w_jd_j)$, and $z=1-\varpi_0-\varpi_1$ gives the product of the two single-detector factors. This is the binomial thinning property of the Poisson distribution.
+\end{proof}
+
+The honest model is completed by detector afterpulsing, which adds to each detector a background proportional to its mean click probability. With $\bar r_j=\sum_s\pi_s\Pr(D_j\ \text{fires}\mid s)$ and afterpulse probability $p_{\rm ap}$, the extra click probability is $q_j=p_{\rm ap}\bar r_j$, and the silence probabilities become $S_j\to S_j(1-q_j)$ and $S_{01}\to S_{01}(1-q_0)(1-q_1)$. We verified numerically that the generating-function route of \cref{eq:silence} and the closed form of \cref{eq:poisson} agree to $2\times10^{-16}$.
+
+\subsection{The honest-device family}\label{sec:family}
+
+For an attack-free link, \cref{eq:outcomes,eq:routing,eq:poisson} define the outcome probabilities as a function of
+\begin{equation}
+\psi=(e_Z,\,e_X,\,p_{d0},\,p_{d1},\,\kappa,\,\rho)\quad\text{and}\quad \eta, \label{eq:params}
+\end{equation}
+where $\rho=\mu_\mathrm{d}/\mu_\mathrm{s}$ is the decoy-to-signal intensity ratio. The signal intensity $\mu_\mathrm{s}$ is read from the transmitter's power monitor and is in any case degenerate with $\eta$; the afterpulse probability is taken from the detector specification. We write $P_{\psi,\eta}$ for the resulting distribution over settings and outcomes. For a link whose device parameters $\psi$ have been calibrated, the \emph{honest-device manifold} is the one-parameter family
+\begin{equation}
+\Mhon_\psi = \{P_{\psi,\eta}:\ \eta\in(0,1]\}. \label{eq:manifold}
+\end{equation}
+Treating $\eta$ as free encodes the physics of \cref{sec:bg-decoy}: changes of loss are absorbed by the decoy-state bound and should not be reported as attacks. Everything that no transmittance can explain, a broken decoy relation, a changed error structure, an anomaly of detector balance or double clicks, a biased setting allocation, is a candidate attack signature.
+
+\section{Physical models of the attacks}\label{sec:attacks}
+
+Each attack acts on a fraction $f$ of the pulses from its onset window onwards, so that the attacked distribution is $Q=(1-f)P_{\psi,\eta}+fP^{\rm atk}$ for the outcome part and analogously for the allocation part. We derive $P^{\rm atk}$ for each family from its physical mechanism; the derivations are written at the level of the per-setting outcome probabilities so that they enter the same likelihood as the honest model.
+
+\paragraph{Intercept--resend.} Eve measures in a basis chosen uniformly at random and resends the state she found, preserving the photon statistics. For matching bases Bob's error is $e_\beta$ when Eve chose Alice's basis and $1/2$ otherwise, so
+\begin{equation}
+e_\beta \;\to\; e'_\beta = \tfrac12 e_\beta + \tfrac14. \label{eq:ir}
+\end{equation}
+The sifted QBER of attacked pulses rises by $\tfrac14(1-2e_\beta)$, which is the textbook signature.
+
+\paragraph{Photon-number splitting.} Eve replaces the channel by a lossless one, stores one photon of every multi-photon pulse and suppresses single photons so that Bob's signal gain is unchanged \cite{Brassard2000}. In the generating-function language,
+\begin{equation}
+G_0(z)=1,\qquad G_1(z)=1-t_1+t_1z,\qquad G_{n\ge2}(z)=(1-b)\,z^{\,n-1}+b, \label{eq:pns}
+\end{equation}
+where $t_1$ is the transmitted fraction of single-photon pulses and $b$ the blocked fraction of multi-photon pulses. Eve chooses $(t_1,b)$ so that the signal click probability equals its honest value $G_\mathrm{s}$: if forwarding all multi-photon pulses already exceeds $G_\mathrm{s}$ she sets $t_1=0$ and solves for $b$, otherwise $b=0$ and she solves for $t_1$. Both conditions are monotone and have a unique solution, found by bisection. Because the decoy intensity has a smaller multi-photon fraction, the decoy gain no longer obeys the honest relation; this is the effect the decoy method was designed to expose \cite{Hwang2003,LoMaChen2005}.
+
+\paragraph{Faked-state attack on blinded detectors.} With Bob's detectors blinded \cite{Lydersen2010}, Eve detects Alice's pulse with efficiency $\eta_E$, chooses a basis $\gamma$ uniformly, and resends a bright trigger encoding her result. A blinded detector clicks deterministically when Bob's basis equals $\gamma$ and not at all otherwise; it produces neither dark counts nor double clicks. With $P_E(k)=1-e^{-\mu_k\eta_E}$ and Eve's own error rate $e_E$, the attacked outcome probabilities are
+\begin{equation}
+p^{\rm atk}_{D_a\mid s}=\tfrac12P_E(k)(1-e_E),\quad p^{\rm atk}_{D_{1-a}\mid s}=\tfrac12P_E(k)e_E\quad(\alpha=\beta),\qquad p^{\rm atk}_{D_0\mid s}=p^{\rm atk}_{D_1\mid s}=\tfrac14P_E(k)\quad(\alpha\ne\beta), \label{eq:blind}
+\end{equation}
+with $p^{\rm atk}_{D_{01}\mid s}=0$ and $p^{\rm atk}_{\varnothing\mid s}=1-\tfrac12P_E(k)$. A stealthy Eve matches the signal gain, $\eta_E=-\ln(1-2G_\mathrm{s})/\mu_\mathrm{s}$, and the honest QBER, $e_E=E_\mathrm{s}$. For small $\mu\eta_E$ the gains of all intensities scale linearly, so the decoy relation is nearly preserved; the remaining signatures are a vanishing vacuum yield, the absence of double clicks and an unsifted detector balance of exactly $1/2$ irrespective of $\kappa$.
+
+\paragraph{Time-shift attack.} Each attacked pulse is shifted to a time at which one detector's efficiency is reduced by a factor $r<1$ \cite{Qi2007,Zhao2008}; with equal probability the favoured detector is $D_0$ or $D_1$. Eve compensates the loss of gain by lowering the channel loss by a factor $g=\min\{2/(1+r),\,1/t\}$. The attacked distribution is the even mixture of two honest-form distributions with transmittance $g\eta$ and relative efficiencies $(1,\kappa r)$ and $(r,\kappa/r)$ respectively, and the QBER of bit $a$ becomes asymmetric because errors are routed to the disfavoured detector half the time.
+
+\paragraph{Trojan horse.} The probe reads Alice's modulators \cite{Gisin2006THA,Lucamarini2015} and is invisible to Bob except through back-scattered light reaching his detectors, modelled as a background $q_{\rm bs}$ added to both detectors. Information leaked to Eve is priced into the key rate by the bounds of Lucamarini \emph{et al.} \cite{Lucamarini2015}; for monitoring, the relevant fact is that with $q_{\rm bs}=0$ the attacked receiver statistics are \emph{identical} to the honest ones (\cref{prop:blind}).
+
+\paragraph{Random-number-generator bias.} A partially predictable bit generator at Alice is modelled as $p_a(1)=\tfrac12+\delta\sin(2\pi t/T+\phi)$, which changes the allocation part of \cref{eq:loglik} and nothing else. The sinusoidal form, whose time average is exactly balanced, deliberately defeats monitors that average the bit balance over long periods.
+
+\paragraph{Compositions.} Composite attacks superpose the first-order perturbations of their components, $Q=P+\sum_i f_i(P^{\rm atk}_i-P)$, which is exact when the components act on disjoint subsets of pulses.

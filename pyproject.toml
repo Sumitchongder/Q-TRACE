@@ -4,29 +4,37 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qtrace"
-version = "0.1.0"
-description = "Physics-informed quantum machine learning for zero-day threat detection in practical QKD"
+version = "2.0.0"
+description = "Physics-constrained zero-day attack detection for decoy-state QKD, with detectability bounds and IBM Quantum hardware validation"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-authors = [
-    { name = "Q-TRACE Project Contributors" }
-]
-keywords = [
-    "quantum key distribution",
-    "quantum machine learning",
-    "anomaly detection",
-    "implementation security",
-    "zero-day detection",
-]
+authors = [{ name = "Sumit Tapas Chongder" }]
+keywords = ["quantum key distribution", "implementation security", "quantum hacking",
+            "change detection", "decoy state", "IBM Quantum", "Qiskit"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Physics",
-    "Topic :: Security",
+    "Topic :: Security :: Cryptography",
 ]
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pandas>=2.0",
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+    "qiskit==2.5.2",
+    "qiskit-aer==0.17.2",
+    "qiskit-ibm-runtime==0.49.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "jupyter>=1.0"]
 
 [project.urls]
 Homepage = "https://github.com/Sumitchongder/Q-TRACE"
@@ -34,9 +42,15 @@ Repository = "https://github.com/Sumitchongder/Q-TRACE"
 Changelog = "https://github.com/Sumitchongder/Q-TRACE/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
-include = ["qkd_simulator*", "attacks*", "models*", "quantum*", "evaluation*", "dataset*"]
+where = ["src"]
 
-[tool.flake8]
-max-line-length = 100
-select = ["E9", "F63", "F7", "F82"]
-exclude = [".git", "__pycache__", "dataset", "results*", "figures", "notebooks"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+ignore = ["E731", "E741", "B905"]

@@ -1,16 +1,16 @@
 cff-version: 1.2.0
-message: "If you use this software or the QKD-TRACE benchmark, please cite it as below."
-title: "Q-TRACE: Physics-Informed Quantum Machine Learning for Zero-Day Threat Detection in Practical QKD"
+message: "If you use Q-TRACE or the QKD-TRACE v2 benchmark, please cite it as below."
+title: "Q-TRACE: physics-based zero-day attack detection for decoy-state quantum key distribution"
 type: software
 authors:
-  - name: "Q-TRACE Project Contributors"
+  - name: "Sumit Tapas Chongder"
+    affiliation: "Department of Computer Science & Engineering and Department of Physics, Indian Institute of Technology Jodhpur, Jodhpur, Rajasthan, India"
 repository-code: "https://github.com/Sumitchongder/Q-TRACE"
 license: MIT
-version: "0.1.0"
-date-released: "2026-09-10"
+version: "2.0.0"
+date-released: "2026-11-21"
 keywords:
   - quantum key distribution
-  - quantum machine learning
-  - anomaly detection
   - implementation security
-  - zero-day detection
+  - change detection
+  - IBM Quantum

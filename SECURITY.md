@@ -18,7 +18,7 @@ accidental credential leakage:
   All example code uses `"my_api_key"` / `"my_crn"` as literal
   placeholders (see `README.md`, "Running on real IBM Quantum hardware").
   Paste your real credentials only into your local Python session /
-  notebook cell at runtime -- never into a file you intend to commit.
+  notebook cell at runtime, never into a file you intend to commit.
 - `.gitignore` excludes `qiskit_ibm_runtime_account.json`, `.qiskit/`,
   and `*.token` by default.
 - If you accidentally commit a real token, treat it as compromised:
@@ -27,7 +27,7 @@ accidental credential leakage:
   API keys) rather than relying on removing it from git history, since
   the token may already be cached by anyone who cloned the repo before
   the fix, and git history rewriting does not retroactively invalidate
-  a leaked credential -- only revocation does.
+  a leaked credential; only revocation does.
 
 ## Supported versions
 

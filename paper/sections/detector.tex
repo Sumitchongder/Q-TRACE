@@ -1,0 +1,142 @@
+\section{The \qtrace{} monitor}\label{sec:detector}
+
+\Cref{fig:pipeline} summarises the construction. The monitor is defined entirely by the honest model of \cref{sec:model} and by the link's own commissioning windows; thresholds are set on attack-free validation links. We describe its components in turn.
+
+\begin{figure}[!tbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=9mm, inner sep=3pt, fill=white},
+  hb/.style={box, fill=blue!6},
+  cb/.style={box, fill=red!6},
+  arr/.style={-{Latex[length=2mm]}, thick},
+  lab/.style={font=\scriptsize, align=center}
+]
+\node[hb, text width=2.5cm] (tab) {Window counts\\ $n_{s,o}$ (96 cells)};
+\node[hb, text width=2.6cm, right=0.55cm of tab] (prof) {Profile nuisance\\ $\hat\eta_t=\argmax_\eta \ell_t(\hat\psi,\eta)$};
+\node[hb, text width=2.4cm, above=0.55cm of prof] (cal) {Commissioning\\ MLE of $\hat\psi$, $b$, $s$, $\Phi$};
+\node[cb, text width=2.7cm, right=0.6cm of prof, yshift=1.05cm] (omni) {Omnibus residuals\\ Freeman--Tukey, 96-dim};
+\node[cb, text width=2.7cm, right=0.6cm of prof] (score) {Physics score test\\ 9 device directions};
+\node[cb, text width=2.7cm, right=0.6cm of prof, yshift=-1.05cm] (set) {Setting test\\ 5 allocation directions};
+\node[box, text width=2.25cm, right=0.6cm of score] (acc) {Accumulate over\\ horizons $M$;\\ fixed and moving\\ reference};
+\node[box, text width=1.9cm, right=0.55cm of acc] (max) {Standardise,\\ take maximum,\\ compare with\\ threshold};
+\node[box, text width=1.9cm, below=0.55cm of max, fill=yellow!10] (attr) {Alarm and\\ attributed\\ parameter};
+\draw[arr] (tab) -- (prof);
+\draw[arr] (cal) -- (prof);
+\draw[arr] (prof.east) -- ++(0.25,0) |- (omni.west);
+\draw[arr] (prof) -- (score);
+\draw[arr] (prof.east) -- ++(0.25,0) |- (set.west);
+\draw[arr] (omni.east) -- ++(0.2,0) |- (acc.west);
+\draw[arr] (score) -- (acc);
+\draw[arr] (set.east) -- ++(0.2,0) |- (acc.west);
+\draw[arr] (acc) -- (max);
+\draw[arr] (max) -- (attr);
+\draw[arr, dashed] (cal.east) -- ++(4.15,0) node[lab, above, pos=0.55] {bias, scale, dispersion} -| (acc.north);
+\end{tikzpicture}}
+\caption{Structure of the \qtrace{} monitor. Commissioning windows (top) fix the device parameters $\hat\psi$ and the static corrections; in every monitoring window the transmittance is profiled out and three families of statistics measure what no honest transmittance can explain. No attack data are used in any block.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Calibration and profiling}\label{sec:calibration}
+
+Let $\ell_t(\psi,\eta)$ be the log-likelihood \eqref{eq:loglik} of window $t$. On $W$ commissioning windows the device parameters are estimated by maximising the profile likelihood
+\begin{equation}
+\hat\psi = \argmax_\psi \sum_{t=1}^{W} \max_{\eta_t}\ \ell_t(\psi,\eta_t). \label{eq:calib}
+\end{equation}
+We parametrise $\psi$ on unconstrained scales (logit for $e_Z,e_X$, logarithm for the others), start from closed-form moment estimates (vacuum click rates for $p_{dj}$, sifted signal QBER for $e_\beta$, unsifted detector ratio for $\kappa$, ratio of log-gains for $\rho$) and use a quasi-Newton optimiser. The inner maximisation over $x=\log\eta_t$ is one-dimensional and smooth and is solved for all windows simultaneously by Newton iterations,
+\begin{equation}
+x^{(i+1)} = x^{(i)} - \frac{\partial_x\ell_t}{\partial_x^2\ell_t}\bigg|_{x^{(i)}}, \label{eq:newton}
+\end{equation}
+with steps clipped to $\pm0.5$ and finite-difference derivatives. On a single CPU core a calibration takes 0.3 to 0.5\,s per link. In monitoring windows the same profiling gives $\hat\eta_t$, the closest honest explanation of window $t$ in transmittance. \Cref{alg:calib} lists the procedure.
+
+\begin{algorithm}[t]
+\caption{Commissioning of one link}\label{alg:calib}
+\begin{algorithmic}[1]
+\Require counts $n^{(t)}_{s,o}$ of $W$ attack-free windows, $\mu_\mathrm{s}$, datasheet $p_{\rm ap}$, setting probabilities $\pi$
+\State $\psi^{(0)}\gets$ moment estimates from vacuum, sifted and unsifted counts
+\State $\hat\psi\gets\argmax_\psi\sum_t\max_{\eta_t}\ell_t(\psi,\eta_t)$ \Comment{quasi-Newton outside, \cref{eq:newton} inside}
+\For{$t=1,\dots,W$}
+  \State $\hat\eta_t\gets\argmax_\eta \ell_t(\hat\psi,\eta)$;\ \ $r_t\gets$ Freeman--Tukey residuals \eqref{eq:ft}
+  \State $(u_t,I_t)\gets$ efficient scores and informations \eqref{eq:effscore}
+\EndFor
+\State $b\gets\bar r$;\ \ $s^2\gets (W\hat\sigma^2_r+\lambda)/(W+\lambda)$, floored at $s_{\min}^2$ \Comment{residual bias and spread}
+\State $b_u\gets\bar u$;\ \ $\Phi\gets$ shrunk covariance of $I_t^{-1/2}(u_t-b_u)$, eigenvalues floored at 1 \Comment{\cref{eq:disp}}
+\State \Return $\hat\psi,b,s,b_u,\Phi$ and the commissioning statistics (for the moving reference)
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Omnibus residual channel}\label{sec:omnibus}
+
+For each of the 72 click cells (24 settings times three click outcomes) and each of the 24 allocation cells, with expected count $E$ under the profiled honest model, we form the Freeman--Tukey residual \cite{FreemanTukey1950}
+\begin{equation}
+r = \sqrt{n}+\sqrt{n+1}-\sqrt{4E+1}. \label{eq:ft}
+\end{equation}
+For Poisson or binomial counts $r$ has mean close to zero and variance close to one even when $E$ is of order unity (\cref{app:ft}), which matters for vacuum double clicks with $E\ll1$ and for signal no-click cells with $E\sim10^6$ alike. Static mismatch between the twin and the honest model (for instance a datasheet afterpulse probability in error by ten per cent) shifts the residuals by a constant; we therefore whiten them with the commissioning statistics, $z_t=(r_t-b)/s$, where $b$ and $s$ are the per-component commissioning mean and shrunk standard deviation.
+
+Two statistics accumulate the whitened residuals over a trailing horizon of $M$ windows. The \emph{persistent-shift} statistic
+\begin{equation}
+S^{\rm sh}_M(t)=\frac{1}{M(1+M/W)}\Bigl\Vert\sum_{\tau=t-M+1}^{t}z_\tau\Bigr\Vert^2 \label{eq:shift}
+\end{equation}
+detects deviations of fixed sign; the factor $1+M/W$ accounts for the variance added by subtracting the estimated bias $b$ (\cref{app:inflation}). The \emph{energy} statistic $S^{\rm en}_M(t)=\sum_\tau\Vert z_\tau\Vert^2$ detects deviations whose sign changes in time, such as the modulated RNG attack. Both are centred and scaled by their chi-square references, $(S-MD)/\sqrt{2MD}$ with $D=96$ for the energy statistic and $(S-D)/\sqrt{2D}$ for the shift statistic.
+
+\subsection{Physics score test}\label{sec:score}
+
+The omnibus channel is consistent against every alternative but spreads its power over 96 directions. Physically realisable deviations, however, move the outcome table along a small number of directions generated by perturbing device parameters. Let $\vartheta=(\vartheta_\psi,\,\vartheta_\eta)$ collect nine \emph{probe directions} and the nuisance:
+\begin{equation}
+\vartheta_\psi = \bigl(\mathrm{logit}\,e_Z,\ \mathrm{logit}\,e_X,\ \log p_{d0},\ \log p_{d1},\ \log\kappa,\ \log\rho,\ \Delta e_{\rm dec},\ \log c_{\rm dbl},\ \log\epsilon_X\bigr),\qquad \vartheta_\eta=\log\eta, \label{eq:directions}
+\end{equation}
+where the last three components vanish on honest links: $\Delta e_{\rm dec}$ lets the misalignment of decoy pulses differ from that of signal pulses, $c_{\rm dbl}$ rescales the double-click probability, and $\epsilon_X$ makes the receiver efficiency depend on Bob's basis. The score of window $t$ at the calibrated point is
+\begin{equation}
+u_t=\sum_{s,o}\bigl(n_{s,o}-E_{s,o}\bigr)\,\nabla_\vartheta\log p_{o\mid s}, \label{eq:score}
+\end{equation}
+and its Fisher information is $I_t=\sum_{s,o}E_{s,o}\,\nabla_\vartheta\log p_{o\mid s}\nabla_\vartheta\log p_{o\mid s}\tr$; the identity $\sum_o p_{o\mid s}\nabla\log p_{o\mid s}=0$ makes the multinomial correction term vanish (\cref{app:fisher}). Because $\eta$ is unknown, the scores along $\vartheta_\psi$ are replaced by their \emph{efficient} versions, the residuals of their projection onto the nuisance score,
+\begin{equation}
+u^{\rm eff}_t = u_{\psi,t} - I_{\psi\eta,t}I_{\eta\eta,t}^{-1}u_{\eta,t},\qquad
+I^{\rm eff}_t = I_{\psi\psi,t} - I_{\psi\eta,t}I_{\eta\eta,t}^{-1}I_{\eta\psi,t}, \label{eq:effscore}
+\end{equation}
+which is Neyman's $C(\alpha)$ construction \cite{Neyman1959}: a small error in $\hat\eta_t$ then has no first-order effect on the statistic. Over a horizon of $M$ windows with $U_M=\sum_\tau(u^{\rm eff}_\tau-b_u)$ and $I_M=\sum_\tau I^{\rm eff}_\tau$, the score statistic is
+\begin{equation}
+S^{\rm ph}_M = \frac{1}{1+M/W}\;U_M\tr I_M^{-1/2}\,\Phi^{-1}\,I_M^{-1/2}U_M. \label{eq:scorestat}
+\end{equation}
+Under the honest hypothesis with Poissonian fluctuations, $\Phi=\mathbb{1}$ and $S^{\rm ph}_M$ is asymptotically $\chi^2_9$ \cite{Rao1948,LehmannRomano2005}; under a local alternative $\vartheta=\vartheta_0+h/\sqrt{N}$ it is noncentral $\chi^2_9$ with noncentrality $h\tr I^{\rm eff}h$, and no test of the same level has higher local power against alternatives in the span of the probe directions.
+
+Real links fluctuate more than shot noise: window-to-window intensity jitter moves the decoy-ratio direction and slow polarisation and temperature drift move the error and background directions. We absorb this excess noise into a dispersion matrix estimated on commissioning windows,
+\begin{equation}
+\Phi = \mathcal{F}\Bigl[(1-\lambda_\Phi)\,\widehat{\mathrm{Cov}}(w)+\lambda_\Phi\,\mathrm{diag}\,\widehat{\mathrm{Cov}}(w)\Bigr],\qquad w_t=I_t^{-1/2}(u^{\rm eff}_t-b_u), \label{eq:disp}
+\end{equation}
+where $\lambda_\Phi=0.3$ is a shrinkage weight in the spirit of Ledoit and Wolf \cite{LedoitWolf2004} and $\mathcal{F}$ floors the eigenvalues at one, so that the honest model is never assumed to be quieter than shot noise. The same construction with the five free setting probabilities $(p_a,p_\alpha,p_\beta,p_\mathrm{d},p_\mathrm{v})$ defines the \emph{setting test} $S^{\rm set}_M$, which carries the signature of biased random-number generators.
+
+\subsection{Drift-robust moving reference}\label{sec:moving}
+
+All statistics above compare a window with commissioning. Slow honest drift then accumulates into the long-horizon statistics and raises their honest quantiles, which costs power. For each channel we therefore also compute a window-limited GLR that compares the recent block $(t-M,t]$ with the immediately preceding $R$ windows,
+\begin{equation}
+d_t = U_{(t-M,t]} - \frac{M}{R}\,U_{(t-M-R,\,t-M]},\qquad \mathrm{Var}(d_t)\simeq\Bigl(1+\frac{M}{R}\Bigr)\mathrm{Var}\bigl(U_{(t-M,t]}\bigr), \label{eq:moving}
+\end{equation}
+and uses $d_t$ in place of $U_M$ in \cref{eq:shift,eq:scorestat}. Static mismatch cancels exactly in $d_t$, and drift that is slow on the scale of $M+R$ windows contributes only through its change across the two blocks, whereas an abrupt change is fully visible during the first $M$ windows after it. An attack that ramps up more slowly than the reference length can evade the moving-reference channels; the fixed-reference channels remain and catch it eventually. We use $R=48$, fixed-reference horizons $M\in\{1,4,16\}$ and moving-reference horizons $M\in\{4,16,32\}$.
+
+\subsection{Combination, thresholds and attribution}\label{sec:combine}
+
+The monitor computes 16 channels per window: omnibus shift and energy, physics score and setting test at the fixed-reference horizons, and the moving-reference versions. Their honest distributions differ, because slow drift inflates long horizons, so each channel $c$ is standardised by its median $m_c$ and upper spread $q_c$ on attack-free \emph{training} links,
+\begin{equation}
+T_t=\max_c\ \frac{S_c(t)-m_c}{q_c-m_c},\qquad q_c=\text{0.999 quantile on training links}, \label{eq:combine}
+\end{equation}
+which equalises the contribution of each channel to the false-alarm rate. The alarm threshold is the $1-\alpha$ quantile of $T_t$ over attack-free \emph{validation} links, half of which contain benign loss faults, so that $\alpha$ is the per-window false-alarm rate. Training, validation and test links are disjoint.
+
+At an alarm the monitor reports the physical constraint the anomaly violates. With the moving-reference sums over the last $M=16$ windows, the apparent displacement of the device parameters is $\hat\delta=I_M^{-1}d_t$ and its standardised value is $\hat\delta_j/\sqrt{(I_M^{-1})_{jj}(1+M/R)\Phi_{jj}}$; the parameter with the largest magnitude is reported. Attribution is defined over the nine device directions and does not apply to setting-test alarms. \Cref{alg:monitor} summarises one monitoring step.
+
+\begin{algorithm}[t]
+\caption{Monitoring step for window $t$}\label{alg:monitor}
+\begin{algorithmic}[1]
+\Require counts $n^{(t)}_{s,o}$; commissioning output of \cref{alg:calib}; channel standardisation $(m_c,q_c)$; threshold $\tau_\alpha$
+\State $\hat\eta_t\gets\argmax_\eta\ell_t(\hat\psi,\eta)$ \Comment{Newton, \cref{eq:newton}}
+\State $z_t\gets(r_t-b)/s$;\ \ $(u^{\rm eff}_t,I^{\rm eff}_t)\gets$ \cref{eq:effscore};\ \ setting scores likewise
+\For{each channel $c$ (statistic, horizon $M$, fixed or moving reference)}
+  \State update running sums; $S_c(t)\gets$ \cref{eq:shift}, energy, \cref{eq:scorestat} or its moving version \eqref{eq:moving}
+\EndFor
+\State $T_t\gets\max_c (S_c(t)-m_c)/(q_c-m_c)$
+\If{$T_t>\tau_\alpha$}
+  \State raise alarm; report $\argmax_j |\hat\delta_j|/\mathrm{se}(\hat\delta_j)$ \Comment{physical attribution}
+\EndIf
+\end{algorithmic}
+\end{algorithm}

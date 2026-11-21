@@ -1,0 +1,28 @@
+{
+ "dispersion": {
+  "phi": 1.0,
+  "phi_qber": 1.0137533926921742,
+  "phi_qber_basis": 1.0261277587687745
+ },
+ "backend": "ibm_marrakesh",
+ "mode": "hardware",
+ "shots": 5900,
+ "links": 33,
+ "log": [
+  {
+   "stage": "pilot",
+   "job_id": "dc0p205hdvas73bjr3j0",
+   "shots": 400,
+   "circuits": 8,
+   "quantum_seconds": 3.0
+  },
+  {
+   "stage": "main",
+   "job_id": "dc0p39ts2omc7389kd30",
+   "shots": 5900,
+   "circuits": 64,
+   "quantum_seconds": 104.0,
+   "wall_seconds": 132.22055172920227
+  }
+ ]
+}

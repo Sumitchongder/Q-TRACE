@@ -1,0 +1,18 @@
+{
+ "dispersion": {
+  "phi": 1.0,
+  "phi_qber": 1.2083704857622475,
+  "phi_qber_basis": 1.0
+ },
+ "backend": "fake_marrakesh",
+ "mode": "rehearsal",
+ "shots": 2000,
+ "links": 38,
+ "log": [
+  {
+   "stage": "rehearsal",
+   "backend": "fake_marrakesh",
+   "shots": 2000
+  }
+ ]
+}

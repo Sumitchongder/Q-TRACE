@@ -3,375 +3,179 @@
 [![CI](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml/badge.svg)](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
-[![Qiskit](https://img.shields.io/badge/Qiskit-2.5.2-6929C4.svg)](https://www.ibm.com/quantum/qiskit)
+[![Qiskit 2.5](https://img.shields.io/badge/Qiskit-2.5.2-6929C4.svg)](https://www.ibm.com/quantum/qiskit)
 
-**Learning the Quantum Channel: Physics-Informed Quantum Machine Learning for Zero-Day Threat Detection in Practical QKD**
+**Physics-constrained zero-day attack detection for decoy-state QKD, with information-theoretic
+detectability bounds and validation on IBM Quantum hardware.**
 
-Q-TRACE is a research framework and open benchmark for detecting *previously
-unseen* implementation-level attacks on decoy-state BB84 QKD systems. Instead
-of training a classifier to recognize known attack signatures, Q-TRACE learns
-the physically-constrained manifold of *healthy* QKD operation and flags
-statistically and physically inconsistent deviations — evaluated not just by
-classification accuracy, but by how much usable secret key is preserved.
-
-> **Status of this repository.** Complete, executable, and independently
-> verified end-to-end: a physics-grounded QKD digital twin, six attack
-> models, a reproducible benchmark dataset generator, ten classical/anomaly
-> baselines, two quantum models (fidelity quantum kernel + VQC), a composite
-> Q-TRACE detector with ablation support, real-hardware validation on IBM
-> `ibm_marrakesh`, and a 5-seed statistical-significance sweep. `results/`
-> and `results_multiseed/` in this repository are the **actual reported
-> results** referenced by the accompanying manuscript (see `docs/`), not
-> placeholder smoke-test output. Every experiment script also supports a
-> `--smoke` flag for a fast correctness check — CI runs these on every push
-> (see the badge above) — but `--smoke` output must never be reported as a
-> result; see `CHANGELOG.md` for two documented cases where code that ran
-> without crashing initially produced methodologically invalid numbers.
-
-## Key results at a glance
-
-| | |
-|---|---|
-| **Zero-day detection AUROC** | **0.669 ± 0.051** (best mean, low variance, 5 seeds) — see `docs/manuscript-tables.md` Table 1 |
-| **Secret-Key Retention @ 80% attack recall** | 27.8% ± 6.9% — full tradeoff curve in Table 4 |
-| **Real hardware validation** | Fidelity quantum kernel + VQC executed on `ibm_marrakesh` (156-qubit Heron r2) |
-| **Ablation** | Temporal representation: consistently helps (5/5 seeds). Quantum kernel: no measurable zero-day benefit (honest null result, 4/5 seeds) |
+Q-TRACE detects implementation attacks on a quantum-key-distribution link *without ever seeing an
+attack*. It tests every telemetry window against the **honest-device manifold**, the set of outcome
+statistics that an attack-free decoy-state BB84 link can produce under arbitrary channel loss, and
+raises an alarm when no honest explanation remains. The same construction yields a detector-independent
+**detectability exponent** `D*` that bounds how fast *any* telemetry monitor (classical, deep or
+quantum) can detect a given attack, and identifies attacks that no monitor can detect at all.
 
 <p align="center">
-  <img src="figures/fig5_roc_zeroday.png" width="45%" alt="Zero-day ROC curves">
-  <img src="figures/fig6_zeroday_heatmap.png" width="45%" alt="Zero-day detection heatmap">
-</p>
-<p align="center">
-  <img src="figures/fig7_skrr.png" width="45%" alt="Secret-key retention">
-  <img src="figures/fig8_quantum_vs_classical.png" width="45%" alt="Quantum vs classical">
+  <img src="figures/fig4_delay_vs_lorden_bound.png" width="46%" alt="Detection delay versus the Lorden bound">
+  <img src="figures/fig3_detection_vs_strength.png" width="52%" alt="Detection probability versus attack strength">
 </p>
 
-Full manuscript-ready tables (LaTeX + Markdown), figure captions, and a
-complete Discussion/Limitations writeup are in [`docs/`](docs/).
+## Contributions
 
----
+1. **Honest-manifold detector.** Per-link maximum-likelihood calibration of the device
+   (`e_Z, e_X, p_d0, p_d1, κ, ρ`) on commissioning data; per-window profiling of the transmittance as a
+   nuisance parameter (loss is not a security-relevant deviation in decoy-state QKD); three families of
+   alarm channels: an omnibus Freeman–Tukey residual test, a physics score test (Rao / Neyman C(α)) over
+   the directions in which device parameters can move, and a setting-allocation test, each with a
+   drift-robust moving-reference variant. No attack data are used anywhere.
+2. **Detectability theory.** `D* = min_η KL(Q ‖ P_η)` per pulse gives, through Lorden's theorem, a lower
+   bound `log(1/α)/(N D*)` on the mean detection delay of any detector at false-alarm rate `α`. A
+   Trojan-horse attack with filtered back-reflection has `D* = 0` exactly: it is provably invisible to
+   every telemetry-based monitor.
+3. **QKD-TRACE v2 benchmark.** A count-level decoy-state twin with full per-detector outcome tables,
+   photon-number-resolved attack physics (PNS with lossless channel, stealthy faked-state blinding,
+   time-shift efficiency mismatch, intercept–resend, Trojan horse, RNG bias, compositions), benign
+   faults, and deliberate model mismatch (afterpulsing, intensity jitter, polarisation and temperature
+   drift) that the detector does not model.
+4. **Hardware validation.** Up to 40 crosstalk-isolated BB84 links run in parallel on one IBM Heron
+   processor, with eavesdroppers *physically executed* as tunable entangling (`RZX/RXX`) and
+   amplitude-damping probes. Eve's ancilla is measured, giving her information gain (and the
+   information leaked before the first alarm) on real hardware.
 
-## 1. Repository structure
+## Results
 
-```
-Q-TRACE/
-├── .github/
-│   ├── workflows/ci.yml          # lint + smoke-test on every push/PR
-│   ├── ISSUE_TEMPLATE/           # bug report / feature request templates
-│   └── PULL_REQUEST_TEMPLATE.md
-├── docs/
-│   ├── manuscript-tables.md      # LaTeX + Markdown tables, ready to paste into the paper
-│   └── limitations-discussion.md # full Discussion + Limitations sections (manuscript voice)
-├── configs/                      # (reserved for experiment config YAMLs)
-├── qkd_simulator/                # the QKD Digital Twin
-│   ├── config.py                 #   physical parameter ranges (Section 6)
-│   ├── physics.py                #   GLLP decoy-state closed-form physics
-│   ├── channel.py                #   fiber channel + environmental drift
-│   ├── detector.py                #   SPAD/SNSPD model + efficiency drift
-│   ├── decoy_state.py            #   Y1/e1 lower/upper bound estimator
-│   └── bb84.py                   #   DecoyBB84Simulator: full telemetry generator
-├── attacks/                      # pluggable attack modules (Section 9)
-│   ├── base.py                   #   Attack interface + CompositeAttack
-│   ├── pns.py, intercept_resend.py, trojan_horse.py,
-│   │   blinding.py, time_shift.py, rng_manipulation.py
-│   └── composite.py              #   registry + canonical compositions (E4)
-├── dataset/
-│   ├── generate.py               # builds the QKD-TRACE benchmark (Section 25-26)
-│   └── */dataset_summary.csv     # small reference summaries (full CSVs are gitignored — see Sec. 4)
-├── models/
-│   ├── classical_baselines.py    # XGBoost, RandomForest, SVM, LogisticRegression
-│   ├── anomaly_baselines.py      # IsolationForest, OneClassSVM, Autoencoder
-│   ├── sequence_models.py        # LSTM/GRU/TemporalCNN (torch, with MLP fallback)
-│   └── qtrace_detector.py        # the full composite Q-TRACE risk engine
-├── quantum/
-│   ├── feature_reduction.py      # PCA -> few-qubit angle encoding
-│   ├── quantum_kernel.py         # fidelity quantum kernel + SVM (Section 15)
-│   ├── vqc.py                    # Variational Quantum Classifier (Section 16)
-│   ├── ibm_runtime_job.py        # REAL HARDWARE script for ibm_marrakesh
-│   └── decode_hardware_counts.py # decode raw hardware counts -> class probabilities
-├── evaluation/
-│   ├── data_utils.py             # shared loading / temporal windowing / scaling
-│   ├── metrics.py                # AUROC/AUPRC/F1/FAR, SKRR, gating effectiveness, Q-TRACE risk score
-│   ├── plotting.py                # Springer/Nature-style figure helpers
-│   ├── run_experiments.py        # MASTER script: trains everything, writes tables+figures
-│   ├── run_multiseed.py          # 5-seed statistical-significance wrapper (resumable)
-│   ├── run_sweep_experiment.py   # channel-loss x detector-efficiency heatmap
-│   └── run_adversarial_evasion.py# physically-constrained evasion search
-├── notebooks/
-│   └── 01_end_to_end_demo.ipynb  # narrated, PRE-EXECUTED walkthrough for Jupyter
-├── figures/                      # reported figures (PNG + PDF)
-├── results/                      # reported result tables (main run)
-├── results_multiseed/            # reported result tables (5-seed aggregate)
-├── Makefile                      # `make data`, `make experiments`, `make multiseed`, ...
-├── pyproject.toml
-├── requirements.txt
-├── environment.yml
-├── CHANGELOG.md                  # documented fixes, including ones that changed reported numbers
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
-├── SECURITY.md                   # credential-handling policy
-├── CITATION.cff
-└── README.md
-```
+<!-- RESULTS:BEGIN -->
+**Attacked links detected (%) and attack-free links with any alarm (FA, %)** at a per-window false-alarm rate of 10⁻³; mean ± 95 % CI over 5 held-out seeds.
 
-## 2. Installation
+| Method | known | zero-day | composite | physical shift | FA honest | FA loss fault | FA honest (shift) |
+|---|---|---|---|---|---|---|---|
+| **Q-TRACE** | 63.6 ± 6.6 | 28.0 ± 2.5 | 65.3 ± 9.1 | 32.0 ± 7.5 | 5.2 ± 3.8 | 0.0 ± 0.0 | 3.2 ± 2.2 |
+| XGBoost (supervised) | 51.2 ± 8.5 | 0.6 ± 0.6 | 42.3 ± 10.8 | 24.4 ± 9.2 | 0.8 ± 1.4 | 8.8 ± 6.5 | 0.0 ± 0.0 |
+| QBER CUSUM | 27.2 ± 5.3 | 1.3 ± 2.5 | 21.0 ± 3.8 | 9.8 ± 3.7 | 1.2 ± 2.2 | 1.6 ± 2.7 | 0.0 ± 0.0 |
+| Decoy CUSUM | 2.5 ± 2.8 | 0.0 ± 0.0 | 0.3 ± 0.9 | 0.0 ± 0.0 | 0.0 ± 0.0 | 3.2 ± 2.2 | 0.0 ± 0.0 |
+| QBER static | 13.1 ± 6.0 | 1.7 ± 1.3 | 11.7 ± 7.3 | 50.7 ± 7.4 | 2.8 ± 2.8 | 0.8 ± 2.2 | 45.6 ± 16.7 |
+| Autoencoder | 3.0 ± 2.7 | 0.0 ± 0.0 | 1.3 ± 1.7 | 0.9 ± 1.5 | 0.0 ± 0.0 | 4.0 ± 8.6 | 0.0 ± 0.0 |
+| Isolation Forest | 3.6 ± 4.6 | 0.4 ± 1.1 | 5.0 ± 8.5 | 0.0 ± 0.0 | 0.0 ± 0.0 | 12.0 ± 8.6 | 0.0 ± 0.0 |
+| One-class SVM | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 |
+| Quantum-kernel OCSVM | 5.7 ± 2.5 | 6.7 ± 2.4 | 4.3 ± 2.8 | 8.9 ± 6.2 | 10.4 ± 3.2 | 12.8 ± 4.2 | 7.2 ± 5.4 |
 
-```bash
-conda activate qgss                     # your existing environment
-pip install -r requirements.txt
-```
+**Window-level AUROC** (mean ± 95 % CI):
 
-or, to create the environment from scratch:
+| Method | known | zero-day | composite | physical shift |
+|---|---|---|---|---|
+| **Q-TRACE** | 0.859 ± 0.033 | 0.636 ± 0.032 | 0.858 ± 0.034 | 0.699 ± 0.032 |
+| XGBoost (supervised) | 0.848 ± 0.026 | 0.499 ± 0.043 | 0.771 ± 0.041 | 0.718 ± 0.041 |
+| QBER CUSUM | 0.664 ± 0.043 | 0.533 ± 0.045 | 0.664 ± 0.034 | 0.624 ± 0.019 |
+| Decoy CUSUM | 0.746 ± 0.022 | 0.546 ± 0.031 | 0.724 ± 0.067 | 0.660 ± 0.036 |
+| QBER static | 0.567 ± 0.064 | 0.487 ± 0.072 | 0.545 ± 0.065 | 0.571 ± 0.075 |
+| Autoencoder | 0.800 ± 0.036 | 0.573 ± 0.017 | 0.766 ± 0.020 | 0.663 ± 0.036 |
+| Isolation Forest | 0.767 ± 0.033 | 0.554 ± 0.014 | 0.745 ± 0.049 | 0.677 ± 0.033 |
+| One-class SVM | 0.814 ± 0.021 | 0.571 ± 0.027 | 0.775 ± 0.029 | 0.677 ± 0.026 |
+| Quantum-kernel OCSVM | 0.523 ± 0.018 | 0.498 ± 0.013 | 0.521 ± 0.014 | 0.501 ± 0.025 |
 
-```bash
-conda env create -f environment.yml
-conda activate qgss
-```
+**IBM Quantum hardware** (`hardware_ibm_marrakesh_20261121T124423Z`), fraction of link-epochs flagged at alpha = 10^-3 with a condition-matched reference (each link's honest monitoring epochs). With the pre-registered commissioning reference, every test, including the QBER monitors, flagged 92 % of honest link-epochs: commissioning circuits lacked the idle period and concurrent two-qubit activity of monitoring circuits, producing an X-basis dephasing shift of about 1.9 %. See `docs/hardware.md`.
 
-**Optional — real deep-learning baselines.** If PyTorch is not installed,
-`models/sequence_models.py` and `models/anomaly_baselines.py` automatically
-fall back to an MLP-based approximation so the pipeline still runs, but this
-fallback is NOT equivalent to LSTM/GRU/TemporalCNN/deep-autoencoder and is
-logged as such. Install PyTorch separately for genuine sequence-model results:
+| probe | n | ideal_qber | measured_qber_excess | Q-TRACE@0.001 | QBER (per basis)@0.001 | QBER (pooled)@0.001 |
+|---|---|---|---|---|---|---|
+| ad(gamma=0.030) | 13 | 0.0113 | 0.0282 | 1.0 | 1.0 | 1.0 |
+| ad(gamma=0.060) | 12 | 0.0226 | 0.0349 | 1.0 | 1.0 | 1.0 |
+| ad(gamma=0.120) | 12 | 0.0455 | 0.0599 | 1.0 | 1.0 | 1.0 |
+| ad(gamma=0.250) | 14 | 0.0960 | 0.1005 | 1.0 | 1.0 | 1.0 |
+| honest | 66 | 0.0000 | 0.0000 | 0.0 | 0.0 | 0.0 |
+| probe(theta=0.150) | 14 | 0.0028 | 0.0049 | 1.0 | 0.9285714285714286 | 0.6428571428571429 |
+| probe(theta=0.250) | 13 | 0.0078 | 0.0087 | 0.9230769230769232 | 0.8461538461538461 | 0.8461538461538461 |
+| probe(theta=0.400) | 14 | 0.0197 | 0.0211 | 1.0 | 1.0 | 1.0 |
+| probe(theta=0.600) | 14 | 0.0437 | 0.0434 | 1.0 | 1.0 | 1.0 |
+| probe(theta=0.900) | 13 | 0.0946 | 0.0905 | 1.0 | 1.0 | 1.0 |
+| probe(theta=1.571) | 13 | 0.2500 | 0.2310 | 1.0 | 1.0 | 1.0 |
+<!-- RESULTS:END -->
+
+All simulated results come from five held-out seeds (101–105) that played no role in any design or
+tuning decision (development used seeds 0–3). Thresholds for every method are set on attack-free
+validation links at the same per-window false-alarm rate. Full tables: [`results/summary/`](results/summary).
+
+## Quick start
 
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/cpu
+git clone https://github.com/Sumitchongder/Q-TRACE.git && cd Q-TRACE
+pip install -r requirements.txt && pip install -e .
+pytest -q                                    # 18 unit tests, < 1 min
+make smoke                                   # end-to-end benchmark on a tiny configuration
+make reproduce                               # full benchmark + rehearsal + figures (~2 h, 1 core)
 ```
 
-## 3. Quick start (Jupyter or terminal)
-
-```bash
-(qgss) $ jupyter notebook
-```
-then open `notebooks/01_end_to_end_demo.ipynb`, **or** run everything from
-the terminal:
-
-```bash
-# Step 1 — generate the benchmark dataset
-python -m dataset.generate --out dataset/qkd_trace_v1 \
-    --runs-per-class 40 --windows-per-run 120 --block-size 30 --seed 42
-
-# Step 2 — run the full experiment suite (all classical + quantum baselines,
-# Q-TRACE composite detector, SKRR, ablation, figures)
-python -m evaluation.run_experiments \
-    --data dataset/qkd_trace_v1/qkd_trace_telemetry.csv \
-    --block-size 30 --n-qubits 6 --out results
-```
-
-Outputs:
-- `results/comparison_table.csv` — full metrics table across all splits/models (Section 17)
-- `results/skrr_table.csv` — Secret-Key Retention Rate comparison (Section 18)
-- `results/ablation_table.csv` — Q-TRACE component ablation (Section 38)
-- `figures/fig5_roc_zeroday.{png,pdf}`
-- `figures/fig7_skrr.{png,pdf}`
-- `figures/fig8_quantum_vs_classical.{png,pdf}`
-
-Use `--smoke` on `run_experiments.py` for a fast (~1 minute) correctness
-check with tiny subsamples — **never use `--smoke` output for reported
-results.**
-
-## 4. Reproducing paper-scale results
-
-The defaults above (`--runs-per-class 40 --windows-per-run 120`) produce a
-dataset large enough for meaningful ROC/AUPRC estimates but still fast
-(minutes) to generate on a laptop. Three additional experiment scripts
-extend the core pipeline to the remaining sections of the research plan
-(shortcuts for all of these are also in the `Makefile` — `make sweep`,
-`make evasion`, `make multiseed`):
-
-```bash
-# Section 22/23 — zero-day recall vs. channel loss x detector efficiency
-# (produces the Figure 6 signature heatmap)
-python -m evaluation.run_sweep_experiment --n-loss 8 --n-eta 8 \
-    --runs-per-point 8 --windows-per-run 80 --out results
-
-# Section 24 — physically-constrained adversarial evasion search
-# (black-box evolutionary search over attack strength/onset, since the
-# full Q-TRACE pipeline is not end-to-end differentiable)
-python -m evaluation.run_adversarial_evasion --attack pns \
-    --n-iterations 60 --population 16 --out results
-# repeat for each attack family you want an evasion-gap estimate for
-```
-
-Both scripts also accept `--smoke` for a fast correctness check.
-
-### Multi-seed runs (error bars for your comparison table)
-
-A single seed's AUROC is a point estimate. `evaluation/run_multiseed.py` repeats
-the **entire** pipeline (fresh dataset generation AND model training) across
-N seeds and aggregates each `(split, model, metric)` cell into mean +/- std:
-
-```bash
-python -m evaluation.run_multiseed --seeds 42 43 44 45 46 \
-    --runs-per-class 40 --windows-per-run 120 --block-size 30 \
-    --n-qubits 6 --out results_multiseed
-```
-
-This is expensive (it reruns dataset generation + the full experiment suite
-once per seed), so it supports **resuming**: if a seed's output already
-exists in `--out`, it is skipped automatically. Re-running the same command
-after an interruption (laptop sleep, closed terminal, etc.) picks up where
-it left off. Use `--force` to redo already-completed seeds anyway.
-
-Outputs:
-- `results_multiseed/comparison_table_mean_std.csv` — mean +/- std per split/model, the table you actually cite
-- `results_multiseed/comparison_table_all_seeds_raw.csv` — every individual seed's raw numbers, for full transparency/appendix
-- `figures/fig5b_zeroday_auroc_error_bars.{png,pdf}` — zero-day AUROC with error bars across seeds
-
-Use `--smoke` first (a couple of minutes) to confirm the whole multi-seed
-loop works on your machine before committing to a several-hour full run.
-
-### What's committed to this repository vs. regenerated locally
-
-`results/`, `results_multiseed/`, and `figures/` contain the **actual
-reported results** referenced by the manuscript (`docs/manuscript-tables.md`)
-and are version-controlled — small CSVs and a handful of figures, a few MB
-total. `dataset/*/qkd_trace_telemetry.csv` and `*.npz` are **not**
-committed (see `.gitignore`): each is 15–20 MB per seed and, critically,
-100% deterministically reproducible from the `--seed` argument recorded
-alongside every generator invocation, so committing them would only bloat
-git history without adding reproducibility. The tiny `dataset_summary.csv`
-per seed *is* kept as a lightweight, diffable record of what was generated.
-Regenerate any dataset with the exact command in Section 3/this section —
-the seed is the only input that matters.
-
-## 5. Running on real IBM Quantum hardware (`ibm_marrakesh`)
-
-`quantum/ibm_runtime_job.py` is the real-hardware execution script.
-**This repository's reported results include genuine execution on real
-`ibm_marrakesh` hardware** (156-qubit Heron r2) — both an 8×8 fidelity
-quantum kernel Gram matrix and 16 VQC inference circuits, each completing
-in well under a minute of wall-clock time and comfortably inside an
-8-minute QPU budget. Before running on your own hardware allocation,
-validate the exact code path offline against a fake backend first:
-
-```bash
-python -m quantum.ibm_runtime_job --mode kernel --n-qubits 4 \
-    --n-train 6 --n-test 6 --shots 256 --use-fake-backend \
-    --out results/test_kernel_fake.npy
-```
-
-Then, in a notebook cell or Python shell (this is the exact credential
-pattern used to obtain this repository's reported hardware results —
-paste your own credentials at runtime only, never into a committed file):
+Detect attacks on your own telemetry:
 
 ```python
-import warnings
-warnings.filterwarnings("ignore")
-from qiskit_ibm_runtime import QiskitRuntimeService
-
-# Paste your credentials here (only need to do this once)
-QiskitRuntimeService.save_account(
-    token="my_api_key",
-    instance="my_crn",
-    overwrite=True,
-    set_as_default=True,
-)
-
-# Verify
-service = QiskitRuntimeService()
-backends = service.backends()
-print(f"Account OK. {len(backends)} backend(s) available:")
-for b in backends[:5]:
-    print(f"  {b.name} ({b.num_qubits} qubits)")
+from qtrace.detect.detector import QTraceDetector
+det = QTraceDetector()
+raw_score, channels, z, link, eta = det.score_run(counts, n_cal=60, mu_s=0.5,
+                                                  afterpulse_spec=0.01)
+# counts: int array (windows, 3 intensities, 2 bits, 2 Alice bases, 2 Bob bases, 4 outcomes)
 ```
 
-Then run against real hardware from the terminal:
+## IBM Quantum hardware run
+
+Open [`notebooks/01_qpu_hardware_run.ipynb`](notebooks/01_qpu_hardware_run.ipynb). The notebook selects
+links on the least busy Heron device, runs a pilot job to measure the actual QPU cost per shot on your
+account, sizes the main job to a budget (`BUDGET_SECONDS = 360` by default), and writes raw per-shot data
+to `results/hardware/`. Nothing is submitted until `CONFIRM = True`. Validate the full pipeline
+offline first:
 
 ```bash
-# Fidelity quantum kernel on real hardware
-python -m quantum.ibm_runtime_job --mode kernel --n-qubits 4 \
-    --n-train 8 --n-test 8 --shots 512 --backend ibm_marrakesh \
-    --max-qpu-seconds 420 --out results/kernel_ibm_marrakesh.npy
-
-# VQC inference on real hardware (train on simulator first, no QPU cost):
-python -c "
-import numpy as np
-from evaluation.data_utils import load_telemetry, make_windows
-from quantum.feature_reduction import QuantumFeatureReducer
-from quantum.vqc import fit_vqc
-from models.classical_baselines import flatten
-
-df = load_telemetry('dataset/qkd_trace_v1/qkd_trace_telemetry.csv')
-train = df[df.split=='train']
-X_train, y_train, meta = make_windows(train, block_size=30)
-reducer = QuantumFeatureReducer(n_qubits=6)
-Xtr_red = reducer.fit_transform(flatten(X_train))
-vqc = fit_vqc(Xtr_red, y_train, n_qubits=6, subsample=250, maxiter=120)
-np.save('results/vqc_trained_params.npy', vqc.weights)
-"
-python -m quantum.ibm_runtime_job --mode vqc_eval --n-qubits 6 \
-    --n-test 16 --shots 512 --vqc-params results/vqc_trained_params.npy \
-    --backend ibm_marrakesh --max-qpu-seconds 300 \
-    --out results/vqc_ibm_marrakesh.npy
-
-# Decode raw hardware measurement counts into class-1 probabilities
-python -m quantum.decode_hardware_counts \
-    --counts results/vqc_ibm_marrakesh.npy \
-    --out results/vqc_ibm_marrakesh_proba.npy
+make rehearsal      # noisy FakeMarrakesh rehearsal, identical data format, no QPU time
 ```
 
-**Important — plan/execution-mode note.** IBM's **Open (free) plan does
-not permit `Session` mode** (`HTTP 400: You are not authorized to run a
-session when using the open plan`). `ibm_runtime_job.py` defaults to
-plain **job mode**, which works on every plan tier; pass `--use-session`
-only if you are on a paid plan and specifically want session-mode queue
-priority. See `CHANGELOG.md` for the fix history on this.
+Rehearsal outputs are written to `figures/rehearsal/` and `results/summary/rehearsal/` and are never
+reported as hardware results. See [`docs/hardware.md`](docs/hardware.md).
 
-### 8-minute QPU budget
+## Repository layout
 
-`--max-qpu-seconds` is a **hard pre-flight ceiling**: the script statically
-estimates expected QPU execution time from `n_circuits x shots x
-per-shot-duration` *before* submitting anything, and aborts with no charge
-to your allocation if the estimate exceeds the budget. Default is 420s
-(7 minutes), leaving margin under an 8-minute allocation. This is a
-conservative *estimate*, not a guarantee from IBM — always cross-check your
-account's usage dashboard during/after a real run, and start with small
-`--n-train/--n-test/--shots` values and scale up only after confirming actual
-consumed time on your account page.
+```
+src/qtrace/
+  physics/     optics.py (receiver outcome model), decoy.py (decoy bounds, key rate, telemetry)
+  twin/        simulator.py (links, drift, model mismatch, faults, window sampling)
+  attacks/     models.py (six physically derived attacks + compositions)
+  detect/      honest_model.py, score_test.py, detector.py, detectability.py
+  baselines/   detectors.py (QBER/decoy CUSUM, IF, OCSVM, AE, XGBoost, quantum-kernel OCSVM)
+  evaluation/  benchmark.py (splits, thresholds, metrics)
+  hardware/    design.py, circuits.py, runner.py, analysis.py
+  viz/         figures.py
+experiments/   run_benchmark.py, run_rehearsal.py, make_figures.py, configs/benchmark.yaml
+notebooks/     01_qpu_hardware_run.ipynb
+results/       benchmark/seed_*/, hardware/, summary/
+figures/       publication figures (PDF + PNG)
+docs/          methods.md, hardware.md, reproducibility.md
+tests/         unit tests (physics invariants, attacks, calibration, hardware analysis)
+```
 
-Two modes are provided:
-- `--mode kernel` — evaluates a small fidelity-quantum-kernel Gram sub-block
-  directly on hardware (a few 4-qubit ZZFeatureMap circuits).
-- `--mode vqc_eval` — loads VQC weights **pre-trained on the simulator**
-  (`quantum/vqc.py`) and runs inference-only circuits on hardware (no
-  on-hardware optimization loop, which would consume the entire budget in a
-  handful of iterations).
+## Reproducibility
 
-## 6. Standards alignment
+Exact package versions are pinned in `requirements.txt`; a `Dockerfile` reproduces every simulated
+result and figure (`docker build -t qtrace . && docker run qtrace`). Each seed directory stores its
+configuration, thresholds, honest-null parameters, software versions and wall time in `meta.json`.
+See [`docs/reproducibility.md`](docs/reproducibility.md) and [`CHANGELOG.md`](CHANGELOG.md), which
+documents the methodological corrections relative to v0.1.
 
-Q-TRACE is positioned as an **implementation-security monitoring framework**,
-not a replacement for information-theoretic QKD security proofs. Relevant
-standards context: ETSI QKD Industry Specification Group work on
-implementation security, optical characterization and penetration testing;
-ISO/IEC 23837-1:2023 (security evaluation of QKD modules); ITU-T X.1713
-(security requirements for QKD nodes) and X.1717 (QKD network control/
-management security).
+## Scope and limitations
 
-## 6.5 Known-issue changelog
+Q-TRACE monitors the statistics Alice and Bob already share; it complements, and does not replace,
+security proofs and device-level countermeasures. Attacks with `D* = 0` (for example a filtered
+Trojan-horse probe) cannot be detected from telemetry and must be excluded by optical isolation and
+power monitoring. Simulated results depend on the twin's parameter ranges, which are stated in
+`src/qtrace/twin/simulator.py`; the hardware experiment emulates the channel with superconducting qubits
+rather than optical fibre. See Section 6 of the paper.
 
-See [`CHANGELOG.md`](CHANGELOG.md) for the full, dated list of fixes —
-including two that changed previously-reported numbers (the physics-
-consistency term and the VQC evaluation subsample) and are worth reading
-before citing any number from an older checkout of this repository.
+## Citation
 
-## 7. Citation
+See [`CITATION.cff`](CITATION.cff).
 
-If you use the QKD-TRACE benchmark or Q-TRACE detector in your research,
-please cite the accompanying paper (add your citation / CITATION.cff once
-published) and reference this repository. Manuscript-ready tables and a
-full Discussion/Limitations writeup are in [`docs/`](docs/).
+## Acknowledgements and AI-use statement
 
-## 8. License
+Parts of the code and documentation were developed with the assistance of an AI model (Claude,
+Anthropic). All design decisions, results and their interpretation were reviewed by the authors, who
+take full responsibility for the content.
 
-See `LICENSE` (MIT). The QKD-TRACE dataset generator produces **synthetic**
-telemetry only — no real QKD hardware or proprietary data is used or
-required.
+## License
 
-## 9. Contributing
-
-Contributions are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for
-development setup, testing requirements, and PR guidelines, and
-[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards. Please
-review [`SECURITY.md`](SECURITY.md) before working with the IBM Quantum
-hardware scripts.
+MIT, see [`LICENSE`](LICENSE).

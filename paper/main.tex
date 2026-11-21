@@ -1,0 +1,172 @@
+\documentclass[11pt,a4paper]{article}
+
+% ==== packages
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.4cm,top=2.5cm,bottom=2.6cm]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amsthm,mathtools}
+\usepackage{txfonts}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs,multirow,array}
+\usepackage[table]{xcolor}
+\usepackage{caption,subcaption}
+\usepackage{algorithm,algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc,shapes.geometric}
+\usepackage{quantikz}
+\usepackage{enumitem}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage[nameinlink,capitalise]{cleveref}
+\makeatletter\providecommand{\theHALG@line}{}\renewcommand{\theHALG@line}{\thealgorithm.\arabic{ALG@line}}\makeatother
+\usepackage{rotating}
+
+\captionsetup{font=small,labelfont=bf,labelsep=period,justification=justified,singlelinecheck=false}
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parskip}{0pt}
+\setlength{\textfloatsep}{12pt plus 2pt minus 2pt}
+\setlength{\floatsep}{10pt plus 2pt minus 2pt}
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}
+\renewcommand{\arraystretch}{1.12}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.85}
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpsep}{14pt plus 2pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% ==== notation
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\KL}{D_{\mathrm{KL}}}
+\newcommand{\Dstar}{D^{\ast}}
+\newcommand{\Mhon}{\mathcal{M}}
+\newcommand{\tr}{^{\mathsf{T}}}
+\providecommand{\ket}[1]{\lvert #1\rangle}
+\providecommand{\bra}[1]{\langle #1\rvert}
+\providecommand{\braket}[2]{\langle #1 \vert #2\rangle}
+\newcommand{\qtrace}{Q-TRACE}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\h}{h_2}
+
+\input{numbers}
+
+\title{\textbf{Physics-based zero-day attack detection for decoy-state quantum key distribution}}
+\author{Sumit Tapas Chongder\\[4pt]
+\small Department of Computer Science \& Engineering and Department of Physics,\\
+\small Indian Institute of Technology Jodhpur, Jodhpur, Rajasthan, India}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Practical quantum key distribution (QKD) is secure only as long as its devices behave as the security proof assumes, and every published implementation attack works by violating one of those assumptions while keeping the quantum bit error rate (QBER) unremarkable. Telemetry monitors are a natural complement to device countermeasures, but the data-driven monitors proposed so far are trained on simulated attacks, offer no false-alarm guarantee, and cannot say which attacks they are able to see. We formulate attack detection in decoy-state BB84 as a sequential test against the \emph{honest-device manifold}: the set of receiver outcome statistics that an attack-free link can produce under arbitrary channel loss. The resulting monitor, \qtrace{}, calibrates a physical model of each link on commissioning data, treats transmittance as a nuisance parameter, and combines an omnibus residual test, a physics score test along the directions in which device parameters can move, and a setting-allocation test, each with a drift-robust moving reference. No attack data enter its construction. The same formulation yields a detector-independent detectability exponent $\Dstar=\min_\eta \KL(Q\Vert P_\eta)$ which, through Lorden's theorem, lower-bounds the delay of any telemetry monitor, and which vanishes identically for a Trojan-horse probe with filtered back-reflection. On a count-level twin of a decoy-state link that contains detector, source and drift effects absent from the monitor's model, and over \NSeeds{} held-out seeds, \qtrace{} detects \DetKnownQT\,\% of links under known attacks, \DetZeroDayQT\,\% under attacks of families never used in development, and \DetCompQT\,\% under composite attacks at a per-window false-alarm rate of $10^{-3}$; the strongest comparison methods reach \DetKnownBest\,\%, \DetZeroDayBest\,\% and \DetCompBest\,\%. Its median detection delay attains the information-theoretic bound for strongly detectable attacks and stays within a small factor of it up to bounds of about ten windows, whereas QBER and learned monitors need one to two orders of magnitude more data for the same attacks. A hardware study on \HwLinks{} parallel links of the IBM \HwBackend{} processor, with eavesdroppers executed as tunable entangling and amplitude-damping probes, reproduces the ideal information--disturbance relations, shows that a commissioning reference acquired under different operating conditions triggers alarms in every monitor tested, and, with a condition-matched reference, detects a probe with an ideal QBER increase of $0.3$\,\% on all \HwThetaAN{} attacked link-epochs with no false alarm on \HwHonestN{} honest ones.
+\end{abstract}
+
+\noindent\textbf{Keywords:} quantum key distribution; implementation security; quantum hacking; decoy states; sequential change detection; score test; detectability; IBM Quantum
+
+\section{Introduction}\label{sec:intro}
+
+Quantum key distribution allows two parties to establish a shared secret whose security rests on quantum mechanics rather than on computational assumptions \cite{BB84,Ekert1991,ShorPreskill2000}. Two decades of work have turned the protocols into deployed systems, including metropolitan networks and satellite links \cite{Liao2017,Chen2021}, and the security of realistic implementations with attenuated laser sources is now well understood \cite{GLLP2004,Hwang2003,LoMaChen2005,Wang2005,Ma2005,Scarani2009,Xu2020,Pirandola2020}. Decoy-state BB84 in particular has become the workhorse of practical QKD.
+
+The security of a real system, however, is only as good as the match between its devices and the model used in the proof. Every implementation attack in the literature exploits a gap of this kind: photon-number splitting exploits multi-photon pulses \cite{Brassard2000,Lutkenhaus2000}; detector blinding turns single-photon avalanche diodes into classical threshold devices that the eavesdropper controls \cite{Lydersen2010,Gerhardt2011,Wiechers2011,Lydersen2011superlinear}; time-shift and efficiency-mismatch attacks exploit detectors whose efficiencies differ in time \cite{Makarov2006,Qi2007,Zhao2008}; Trojan-horse attacks read modulator settings through back-reflected light \cite{Gisin2006THA,Jain2014THA,Lucamarini2015}; and calibration, phase-remapping, laser-damage and laser-seeding attacks manipulate the devices themselves \cite{Jain2011calibration,XuQiLo2010,Bugge2014,Makarov2016,Huang2019seeding}. Reviews of this landscape stress that the QBER, the quantity a system monitors by default, is precisely what a competent eavesdropper keeps low \cite{Jain2016review,SunHuang2022,Diamanti2016}.
+
+Three lines of defence exist. Device-independent and measurement-device-independent protocols remove whole classes of assumptions \cite{Acin2007,LoCurtyQi2012} at a cost in rate and complexity. Hardware countermeasures close individual side channels \cite{Lucamarini2015,Ponosova2022}, but each closes only the channel it was designed for and may open others. Security proofs can be extended to cover characterised imperfections \cite{Tamaki2016,Pereira2020,Zapatero2021}, which presupposes that the imperfection is known. A fourth, complementary line is \emph{monitoring}: the legitimate parties already share rich statistics after sifting and error correction, and an attack that changes those statistics can, in principle, be noticed.
+
+Monitoring has recently attracted machine-learning approaches. Supervised and semi-supervised neural networks have been trained to recognise attacks on continuous-variable systems \cite{Mao2020,Luo2022} and on discrete-variable systems \cite{XuJ2024,AlMohammed2021,Ren2021}; one-class anomaly detectors have been applied to receiver attacks on an experimental system \cite{Liu2025AD}; hybrid quantum--classical recurrent networks have been proposed for decoy-state BB84 telemetry \cite{AlKuwari2025}; and adversarial training against adaptive attackers has been explored \cite{MohamedAlKuwari2026}. These studies show that attacks leave learnable traces. They also share three limitations that matter for deployment. First, supervised detectors are trained on the attacks they are tested on, which is not the situation a system faces against an unknown attack. Second, the false-alarm rate is an empirical property of a particular test set rather than a controlled design parameter, although a false alarm discards key and a missed alarm compromises it. Third, none of these works asks which attacks are detectable \emph{at all} from the available telemetry, so a poor result cannot be distinguished from a fundamentally invisible attack.
+
+This paper addresses the three limitations with a single idea. Instead of learning what attacks look like, we characterise what an honest link can look like. Given the receiver statistics of a decoy-state link, the set of distributions consistent with \emph{some} attack-free channel, with transmittance left free because loss is accounted for by the decoy-state bound, forms a low-dimensional manifold. Detection becomes a composite hypothesis test against that manifold, and the information divergence from an attacked distribution to the manifold measures how detectable the attack is for any monitor whatsoever.
+
+\paragraph{Contributions.} The work makes four contributions.
+\begin{enumerate}[label=(\roman*)]
+\item \emph{An honest-manifold monitor.} We derive a count-level model of a two-detector decoy-state receiver that is exact for threshold detectors and photon-number-dependent channels (\cref{sec:model}), and build on it a sequential monitor, \qtrace{}, that calibrates each link on commissioning data and combines an omnibus residual test, a physics score test with an efficient treatment of the transmittance nuisance, and a setting-allocation test, each with a drift-robust moving reference (\cref{sec:detector}). The monitor is never shown an attack.
+\item \emph{Detectability limits.} We define the detectability exponent $\Dstar$, show that it lower-bounds the delay of every telemetry monitor at a given false-alarm rate, give its local form in terms of the efficient Fisher information, and prove that a Trojan-horse probe with filtered back-reflection is invisible to all telemetry monitors (\cref{sec:theory}).
+\item \emph{A benchmark with model mismatch.} We construct six physically derived attacks and three compositions on a count-level twin that contains afterpulsing, intensity jitter, polarisation and temperature drift, none of which the monitor models, and compare \qtrace{} with industry monitors, four anomaly detectors including a quantum-kernel method, and a supervised classifier under matched false-alarm rates on held-out seeds (\cref{sec:benchmark,sec:results}).
+\item \emph{A hardware study.} We run \HwLinks{} BB84 links in parallel on an IBM Heron processor with eavesdroppers implemented as tunable two-qubit probes, measure the eavesdropper's information on her ancilla, and report both a pre-registered analysis, in which every monitor raised alarms on honest links because the commissioning reference had been acquired under different operating conditions, and a condition-matched analysis (\cref{sec:hardware}).
+\end{enumerate}
+The code, the raw hardware data and every number in this paper are available in the accompanying repository; each quantitative statement is generated from the result files by a script.
+
+\paragraph{What this work does not claim.} The monitor complements security proofs and device countermeasures; it does not replace them. Attacks with $\Dstar=0$ cannot be detected from telemetry by any method, and we identify one. The simulation results depend on the stated parameter ranges of the twin, and the hardware study emulates the quantum channel with superconducting qubits rather than optical fibre.
+
+\paragraph{Outline.} \Cref{sec:background} reviews decoy-state BB84, implementation attacks and change detection. \Cref{sec:model} derives the receiver model and \cref{sec:attacks} the attack models. \Cref{sec:detector} constructs the monitor and \cref{sec:theory} develops the detectability theory. \Cref{sec:benchmark,sec:results} describe the benchmark and its results, \cref{sec:hardware} the hardware study, and \cref{sec:discussion} discusses implications and limitations. Derivations, parameter tables and supplementary results are collected in the appendices.
+
+\section{Background}\label{sec:background}
+
+\subsection{Decoy-state BB84}\label{sec:bg-decoy}
+
+In BB84 \cite{BB84} Alice encodes a random bit $a$ in one of two conjugate bases, $\alpha\in\{Z,X\}$, and Bob measures in a basis $\beta$ chosen independently; rounds with $\alpha=\beta$ form the sifted key. With a phase-randomised weak coherent source the number of photons in a pulse of mean $\mu$ is Poisson distributed, so a fraction $1-e^{-\mu}(1+\mu)$ of pulses carries two or more photons, and an eavesdropper able to split those photons learns their bits without disturbance \cite{Brassard2000,Lutkenhaus2000}. The GLLP analysis \cite{GLLP2004} shows that secure key can still be extracted from the single-photon component; the decoy-state method \cite{Hwang2003,LoMaChen2005,Wang2005} estimates the single-photon yield $Y_1$ and error rate $e_1$ by sending pulses of several intensities that the eavesdropper cannot distinguish. With a signal intensity $\mu$, a weak decoy $\nu<\mu$ and a vacuum decoy, the bounds of Ma \emph{et al.} \cite{Ma2005} read
+\begin{align}
+Y_1 &\ge Y_1^{L} = \frac{\mu}{\mu\nu-\nu^2}\left(Q_\nu e^{\nu} - Q_\mu e^{\mu}\frac{\nu^2}{\mu^2} - \frac{\mu^2-\nu^2}{\mu^2}Y_0\right), \label{eq:y1}\\
+e_1 &\le e_1^{U} = \frac{E_\nu Q_\nu e^{\nu} - e_0 Y_0}{Y_1^{L}\,\nu}, \label{eq:e1}
+\end{align}
+where $Q_k$ and $E_k$ are the gain and QBER of intensity $k$, $Y_0$ is the vacuum yield and $e_0=1/2$. The asymptotic key rate per signal pulse is
+\begin{equation}
+R = Q_1\bigl[1-\h(e_1^{U})\bigr] - f\,Q_\mu \h(E_\mu),\qquad Q_1 = Y_1^{L}\mu e^{-\mu},\label{eq:rate}
+\end{equation}
+with $\h$ the binary entropy and $f\ge 1$ the error-correction inefficiency. We use the efficient variant in which key is distilled from $Z$-basis rounds and the phase error is bounded with $X$-basis decoy statistics \cite{LoChauArdehali2005}. Finite-size corrections \cite{Tomamichel2012,Lim2014} are not needed for the monitoring problem and are not used here.
+
+The structure of \cref{eq:y1,eq:e1,eq:rate} is the key physical fact behind this paper: the decoy-state bound is valid for \emph{any} channel transmittance, so a change of loss alone is not a security-relevant event. What an attack cannot avoid without restriction is a change in the relations between intensities, bases, bit values and detectors that an honest lossy channel would impose.
+
+\subsection{Implementation attacks}\label{sec:bg-attacks}
+
+\Cref{tab:attacks} summarises the attacks considered in this work and the telemetry signatures they produce. Intercept--resend raises the QBER by a quarter of the intercepted fraction. Photon-number splitting with a lossless channel \cite{Brassard2000} preserves the signal gain but breaks the decoy relation. Faked-state attacks on blinded detectors \cite{Lydersen2010,Gerhardt2011} can reproduce the gain and even the QBER, but blinded detectors produce neither dark counts nor double clicks. Time-shift attacks \cite{Qi2007,Zhao2008} exploit efficiency mismatch \cite{Makarov2006} and change the error structure in a bit-dependent way. Trojan-horse attacks \cite{Gisin2006THA,Lucamarini2015} act on Alice and need not affect Bob at all. A partially predictable random-number generator changes only the setting statistics. These six families span passive and active attacks, transmitter and receiver, and photon-number, timing, detector and randomness side channels.
+
+\begin{table}[!tbp]
+\centering
+\caption{Attack families used in this work, their physical mechanism and their signature in receiver telemetry. ``Known'' families are available to the supervised baseline during training; ``zero-day'' families are used only for testing and were never used in the design of \qtrace{}.}
+\label{tab:attacks}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{1.35cm}>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{5.2cm}@{}}
+\toprule
+Family & Role & Mechanism & Telemetry signature \\
+\midrule
+Intercept--resend & known & Measure in random basis, resend found state & Sifted error $e\to e/2+1/4$ on attacked pulses \\
+Photon-number splitting & known & Keep one photon of multi-photon pulses, lossless forwarding, suppress single photons to match gain \cite{Brassard2000} & Decoy/signal gain relation, double-click rate \\
+Detector blinding & known & Faked states on blinded detectors, gain and QBER matched \cite{Lydersen2010} & No dark counts, no double clicks, unsifted balance $\to 1/2$ \\
+Time-shift & zero-day & Exploit efficiency mismatch; loss compensated \cite{Qi2007,Zhao2008} & Bit-dependent errors, double clicks \\
+Trojan horse & zero-day & Probe Alice's modulators \cite{Gisin2006THA}; optional back-scatter to Bob & Background counts only; none if filtered \\
+RNG bias & zero-day & Bit generator modulated as $\tfrac12+\delta\sin(2\pi t/T)$ & Setting allocation only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sequential change detection}\label{sec:bg-cd}
+
+A monitor observes a sequence of windows and must raise an alarm soon after a change of distribution while rarely alarming without one. For i.i.d.\ observations with known pre- and post-change laws $P$ and $Q$, Page's CUSUM \cite{Page1954} is optimal in Lorden's minimax sense \cite{Lorden1971,Moustakides1986}, and every procedure whose average run length to false alarm is at least $\gamma$ has a worst-case mean delay of at least $(1+o(1))\log\gamma/\KL(Q\Vert P)$ as $\gamma\to\infty$ \cite{Lorden1971,Lai1998}. When the pre-change law contains unknown parameters and the post-change law is unknown, generalised likelihood ratio (GLR) and score procedures are used \cite{Basseville1993,Tartakovsky2014}. The score (Rao) test \cite{Rao1948} and Neyman's $C(\alpha)$ construction \cite{Neyman1959} are locally most powerful against alternatives along chosen directions and handle nuisance parameters through the efficient score. These tools, standard in industrial process control, have not, to our knowledge, been used to build attack monitors for QKD from a physical model of the receiver.
+
+\input{sections/model}
+\input{sections/detector}
+\input{sections/theory}
+\input{sections/benchmark}
+\input{sections/results}
+\input{sections/hardware}
+\input{sections/discussion}
+
+\input{sections/declarations}
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\clearpage
+\appendix
+\input{sections/appendix}
+
+\end{document}
