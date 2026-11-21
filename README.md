@@ -1,4 +1,4 @@
-# Q-TRACE
+# Q-TRACE: Quantum Telemetry Residuals Against Calibrated Expectations
 
 [![CI](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml/badge.svg)](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
