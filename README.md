@@ -5,7 +5,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 [![Qiskit 2.5](https://img.shields.io/badge/Qiskit-2.5.2-6929C4.svg)](https://www.ibm.com/quantum/qiskit)
 
-**Physics-constrained zero-day attack detection for decoy-state QKD, with information-theoretic
+**Q-TRACE (Quantum Telemetry Residuals Against Calibrated Expectations): physics-based zero-day attack detection for decoy-state QKD, with information-theoretic
 detectability bounds and validation on IBM Quantum hardware.**
 
 Q-TRACE detects implementation attacks on a quantum-key-distribution link *without ever seeing an
