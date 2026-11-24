@@ -1,12 +1,22 @@
 # Q-TRACE: Quantum Telemetry Residuals Against Calibrated Expectations
 
+[![arXiv](https://img.shields.io/badge/arXiv-2611.28945-b31b1b.svg)](https://arxiv.org/abs/2611.28945)
 [![CI](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml/badge.svg)](https://github.com/Sumitchongder/Q-TRACE/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 [![Qiskit 2.5](https://img.shields.io/badge/Qiskit-2.5.2-6929C4.svg)](https://www.ibm.com/quantum/qiskit)
 
-**Q-TRACE (Quantum Telemetry Residuals Against Calibrated Expectations): physics-based zero-day attack detection for decoy-state QKD, with information-theoretic
-detectability bounds and validation on IBM Quantum hardware.**
+**Physics-based zero-day attack detection for decoy-state quantum key distribution, with
+information-theoretic detectability bounds and validation on IBM Quantum hardware.**
+
+> 📄 **Paper:** Sumit Tapas Chongder, *Q-TRACE: Physics-based zero-day attack detection for decoy-state
+> quantum key distribution*, [arXiv:2611.28945](https://arxiv.org/abs/2611.28945) [quant-ph] (2026).
+> The manuscript sources are in [`paper/`](paper), and every number in the paper is regenerated from
+> this repository by [`paper/build_numbers.py`](paper/build_numbers.py).
+
+<p align="center">
+  <img src="figures/Q-TRACE_overview.png" width="96%" alt="Q-TRACE overview">
+</p>
 
 Q-TRACE detects implementation attacks on a quantum-key-distribution link *without ever seeing an
 attack*. It tests every telemetry window against the **honest-device manifold**, the set of outcome
@@ -16,8 +26,8 @@ raises an alarm when no honest explanation remains. The same construction yields
 quantum) can detect a given attack, and identifies attacks that no monitor can detect at all.
 
 <p align="center">
-  <img src="figures/fig4_delay_vs_lorden_bound.png" width="46%" alt="Detection delay versus the Lorden bound">
-  <img src="figures/fig3_detection_vs_strength.png" width="52%" alt="Detection probability versus attack strength">
+  <img src="figures/fig4_delay_vs_lorden_bound.png" width="40%" alt="Detection delay versus the Lorden bound">
+  <img src="figures/fig3_detection_vs_strength.png" width="58%" alt="Detection probability versus attack strength">
 </p>
 
 ## Contributions
@@ -37,34 +47,39 @@ quantum) can detect a given attack, and identifies attacks that no monitor can d
    time-shift efficiency mismatch, intercept–resend, Trojan horse, RNG bias, compositions), benign
    faults, and deliberate model mismatch (afterpulsing, intensity jitter, polarisation and temperature
    drift) that the detector does not model.
-4. **Hardware validation.** Up to 40 crosstalk-isolated BB84 links run in parallel on one IBM Heron
-   processor, with eavesdroppers *physically executed* as tunable entangling (`RZX/RXX`) and
-   amplitude-damping probes. Eve's ancilla is measured, giving her information gain (and the
-   information leaked before the first alarm) on real hardware.
+4. **Hardware validation.** 33 crosstalk-isolated BB84 links run in parallel on the IBM Heron
+   processor `ibm_marrakesh`, with eavesdroppers *physically executed* as tunable entangling
+   (`RZX/RXX`) and amplitude-damping probes. Eve's ancilla is measured, giving her information gain
+   (and the information leaked before the first alarm) on real hardware.
 
 ## Results
 
 <!-- RESULTS:BEGIN -->
-**Attacked links detected (%) and attack-free links with any alarm (FA, %)** at a per-window false-alarm rate of 10⁻³; mean ± 95 % CI over 5 held-out seeds.
+**Attacked links detected (%) and attack-free links with any alarm (FA, %)** at a per-window false-alarm
+rate of 10⁻³; mean ± 95 % CI over 5 held-out seeds (3,275 links, 655,000 telemetry windows). "Long
+links" is the 60 to 120 km regime absent from training.
 
-| Method | known | zero-day | composite | physical shift | FA honest | FA loss fault | FA honest (shift) |
+| Method | Known | Zero-day | Composite | Long links | FA honest | FA loss fault | FA long links |
 |---|---|---|---|---|---|---|---|
-| **Q-TRACE** | 63.6 ± 6.6 | 28.0 ± 2.5 | 65.3 ± 9.1 | 32.0 ± 7.5 | 5.2 ± 3.8 | 0.0 ± 0.0 | 3.2 ± 2.2 |
+| **Q-TRACE** | **63.6 ± 6.6** | **28.0 ± 2.5** | **65.3 ± 9.1** | 32.0 ± 7.5 | 5.2 ± 3.8 | **0.0 ± 0.0** | 3.2 ± 2.2 |
 | XGBoost (supervised) | 51.2 ± 8.5 | 0.6 ± 0.6 | 42.3 ± 10.8 | 24.4 ± 9.2 | 0.8 ± 1.4 | 8.8 ± 6.5 | 0.0 ± 0.0 |
 | QBER CUSUM | 27.2 ± 5.3 | 1.3 ± 2.5 | 21.0 ± 3.8 | 9.8 ± 3.7 | 1.2 ± 2.2 | 1.6 ± 2.7 | 0.0 ± 0.0 |
 | Decoy CUSUM | 2.5 ± 2.8 | 0.0 ± 0.0 | 0.3 ± 0.9 | 0.0 ± 0.0 | 0.0 ± 0.0 | 3.2 ± 2.2 | 0.0 ± 0.0 |
-| QBER static | 13.1 ± 6.0 | 1.7 ± 1.3 | 11.7 ± 7.3 | 50.7 ± 7.4 | 2.8 ± 2.8 | 0.8 ± 2.2 | 45.6 ± 16.7 |
+| QBER static | 13.1 ± 6.0 | 1.7 ± 1.3 | 11.7 ± 7.3 | 50.7 ± 7.4 ¹ | 2.8 ± 2.8 | 0.8 ± 2.2 | 45.6 ± 16.7 |
 | Autoencoder | 3.0 ± 2.7 | 0.0 ± 0.0 | 1.3 ± 1.7 | 0.9 ± 1.5 | 0.0 ± 0.0 | 4.0 ± 8.6 | 0.0 ± 0.0 |
 | Isolation Forest | 3.6 ± 4.6 | 0.4 ± 1.1 | 5.0 ± 8.5 | 0.0 ± 0.0 | 0.0 ± 0.0 | 12.0 ± 8.6 | 0.0 ± 0.0 |
 | One-class SVM | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 | 0.0 ± 0.0 |
-| Quantum-kernel OCSVM | 5.7 ± 2.5 | 6.7 ± 2.4 | 4.3 ± 2.8 | 8.9 ± 6.2 | 10.4 ± 3.2 | 12.8 ± 4.2 | 7.2 ± 5.4 |
+| Quantum-kernel OCSVM | 5.7 ± 2.5 | 6.7 ± 2.4 ² | 4.3 ± 2.8 | 8.9 ± 6.2 | 10.4 ± 3.2 | 12.8 ± 4.2 | 7.2 ± 5.4 |
+
+¹ An artefact: the static 11 % threshold also alarms on 45.6 % of *honest* long links, whose QBER can
+exceed 11 %. ² Not genuine detection: the same method alarms on 10.4 % of attack-free links.
 
 **Window-level AUROC** (mean ± 95 % CI):
 
-| Method | known | zero-day | composite | physical shift |
+| Method | Known | Zero-day | Composite | Long links |
 |---|---|---|---|---|
-| **Q-TRACE** | 0.859 ± 0.033 | 0.636 ± 0.032 | 0.858 ± 0.034 | 0.699 ± 0.032 |
-| XGBoost (supervised) | 0.848 ± 0.026 | 0.499 ± 0.043 | 0.771 ± 0.041 | 0.718 ± 0.041 |
+| **Q-TRACE** | **0.859 ± 0.033** | **0.636 ± 0.032** | **0.858 ± 0.034** | 0.699 ± 0.032 |
+| XGBoost (supervised) | 0.848 ± 0.026 | 0.499 ± 0.043 | 0.771 ± 0.041 | **0.718 ± 0.041** |
 | QBER CUSUM | 0.664 ± 0.043 | 0.533 ± 0.045 | 0.664 ± 0.034 | 0.624 ± 0.019 |
 | Decoy CUSUM | 0.746 ± 0.022 | 0.546 ± 0.031 | 0.724 ± 0.067 | 0.660 ± 0.036 |
 | QBER static | 0.567 ± 0.064 | 0.487 ± 0.072 | 0.545 ± 0.065 | 0.571 ± 0.075 |
@@ -73,25 +88,37 @@ quantum) can detect a given attack, and identifies attacks that no monitor can d
 | One-class SVM | 0.814 ± 0.021 | 0.571 ± 0.027 | 0.775 ± 0.029 | 0.677 ± 0.026 |
 | Quantum-kernel OCSVM | 0.523 ± 0.018 | 0.498 ± 0.013 | 0.521 ± 0.014 | 0.501 ± 0.025 |
 
-**IBM Quantum hardware** (`hardware_ibm_marrakesh_20261121T124423Z`), fraction of link-epochs flagged at alpha = 10^-3 with a condition-matched reference (each link's honest monitoring epochs). With the pre-registered commissioning reference, every test, including the QBER monitors, flagged 92 % of honest link-epochs: commissioning circuits lacked the idle period and concurrent two-qubit activity of monitoring circuits, producing an X-basis dephasing shift of about 1.9 %. See `docs/hardware.md`.
+**IBM Quantum hardware** (`ibm_marrakesh`, 33 parallel links, 64 circuits × 5,900 shots, 107 s of QPU
+time). Link-epochs flagged at α = 10⁻³ with a condition-matched reference (each link's honest
+monitoring epochs). ΔQBER is the increase of the sifted QBER caused by the probe.
 
-| probe | n | ideal_qber | measured_qber_excess | Q-TRACE@0.001 | QBER (per basis)@0.001 | QBER (pooled)@0.001 |
+| Probe | Link-epochs | Ideal ΔQBER | Measured ΔQBER | Q-TRACE | QBER per basis | QBER pooled |
 |---|---|---|---|---|---|---|
-| ad(gamma=0.030) | 13 | 0.0113 | 0.0282 | 1.0 | 1.0 | 1.0 |
-| ad(gamma=0.060) | 12 | 0.0226 | 0.0349 | 1.0 | 1.0 | 1.0 |
-| ad(gamma=0.120) | 12 | 0.0455 | 0.0599 | 1.0 | 1.0 | 1.0 |
-| ad(gamma=0.250) | 14 | 0.0960 | 0.1005 | 1.0 | 1.0 | 1.0 |
-| honest | 66 | 0.0000 | 0.0000 | 0.0 | 0.0 | 0.0 |
-| probe(theta=0.150) | 14 | 0.0028 | 0.0049 | 1.0 | 0.9285714285714286 | 0.6428571428571429 |
-| probe(theta=0.250) | 13 | 0.0078 | 0.0087 | 0.9230769230769232 | 0.8461538461538461 | 0.8461538461538461 |
-| probe(theta=0.400) | 14 | 0.0197 | 0.0211 | 1.0 | 1.0 | 1.0 |
-| probe(theta=0.600) | 14 | 0.0437 | 0.0434 | 1.0 | 1.0 | 1.0 |
-| probe(theta=0.900) | 13 | 0.0946 | 0.0905 | 1.0 | 1.0 | 1.0 |
-| probe(theta=1.571) | 13 | 0.2500 | 0.2310 | 1.0 | 1.0 | 1.0 |
+| Honest (no probe) | 66 | 0 | 0 | **0/66** | 0/66 | 0/66 |
+| Entangling, θ = 0.15 | 14 | 0.28 % | 0.49 % | **14/14** | 13/14 | 9/14 |
+| Entangling, θ = 0.25 | 13 | 0.78 % | 0.87 % | **12/13** | 11/13 | 11/13 |
+| Entangling, θ = 0.40 | 14 | 1.97 % | 2.11 % | 14/14 | 14/14 | 14/14 |
+| Entangling, θ = 0.60 | 14 | 4.37 % | 4.34 % | 14/14 | 14/14 | 14/14 |
+| Entangling, θ = 0.90 | 13 | 9.46 % | 9.05 % | 13/13 | 13/13 | 13/13 |
+| Entangling, θ = π/2 (intercept–resend) | 13 | 25.00 % | 23.10 % | 13/13 | 13/13 | 13/13 |
+| Amplitude damping, γ = 0.03 | 13 | 1.13 % | 2.82 % | 13/13 | 13/13 | 13/13 |
+| Amplitude damping, γ = 0.06 | 12 | 2.26 % | 3.49 % | 12/12 | 12/12 | 12/12 |
+| Amplitude damping, γ = 0.12 | 12 | 4.55 % | 5.99 % | 12/12 | 12/12 | 12/12 |
+| Amplitude damping, γ = 0.25 | 14 | 9.60 % | 10.05 % | 14/14 | 14/14 | 14/14 |
+
+For the weakest probe (θ = 0.15), half of the attacked link-epochs are flagged after 511 shots per
+circuit with Q-TRACE, 432 with the per-basis QBER test and 2,851 with the pooled QBER test, so Eve
+learns 14.9, 12.6 and 83.0 bits of sifted key respectively before the alarm.
+
+**The reference matters.** With the pre-registered commissioning reference, every test, including the
+QBER monitors, flagged 92 % of honest link-epochs. Commissioning circuits lacked the idle period and
+concurrent two-qubit activity of monitoring circuits, producing an X-basis dephasing shift of about
+1.9 % on every link. The condition-matched analysis was defined after this failure and is reported as
+such. See [`docs/hardware.md`](docs/hardware.md) and Section 9 of the paper.
 <!-- RESULTS:END -->
 
-All simulated results come from five held-out seeds (101–105) that played no role in any design or
-tuning decision (development used seeds 0–3). Thresholds for every method are set on attack-free
+All simulated results come from five held-out seeds (101 to 105) that played no role in any design or
+tuning decision (development used seeds 0 to 3). Thresholds for every method are set on attack-free
 validation links at the same per-window false-alarm rate. Full tables: [`results/summary/`](results/summary).
 
 ## Quick start
@@ -127,7 +154,8 @@ make rehearsal      # noisy FakeMarrakesh rehearsal, identical data format, no Q
 ```
 
 Rehearsal outputs are written to `figures/rehearsal/` and `results/summary/rehearsal/` and are never
-reported as hardware results. See [`docs/hardware.md`](docs/hardware.md).
+reported as hardware results. A follow-up run should insert timing-matched delays and the same
+concurrent gate activity into the commissioning circuits. See [`docs/hardware.md`](docs/hardware.md).
 
 ## Repository layout
 
@@ -143,6 +171,7 @@ src/qtrace/
   viz/         figures.py
 experiments/   run_benchmark.py, run_rehearsal.py, make_figures.py, configs/benchmark.yaml
 notebooks/     01_qpu_hardware_run.ipynb
+paper/         manuscript sources (main.tex, sections/, tables/, figures/) and build_numbers.py
 results/       benchmark/seed_*/, hardware/, summary/
 figures/       publication figures (PDF + PNG)
 docs/          methods.md, hardware.md, reproducibility.md
@@ -164,17 +193,37 @@ security proofs and device-level countermeasures. Attacks with `D* = 0` (for exa
 Trojan-horse probe) cannot be detected from telemetry and must be excluded by optical isolation and
 power monitoring. Simulated results depend on the twin's parameter ranges, which are stated in
 `src/qtrace/twin/simulator.py`; the hardware experiment emulates the channel with superconducting qubits
-rather than optical fibre. See Section 6 of the paper.
+rather than optical fibre, used a single processor and a single run, and its condition-matched analysis
+was defined after the pre-registered one. See Section 10.4 of the paper.
 
 ## Citation
 
-See [`CITATION.cff`](CITATION.cff).
+If you use Q-TRACE, the QKD-TRACE v2 benchmark or the hardware data, please cite:
+
+```bibtex
+@article{chongder2026qtrace,
+  title         = {{Q-TRACE}: Physics-based zero-day attack detection for decoy-state quantum key distribution},
+  author        = {Chongder, Sumit Tapas},
+  journal       = {arXiv preprint arXiv:2611.28945},
+  year          = {2026},
+  eprint        = {2611.28945},
+  archivePrefix = {arXiv},
+  primaryClass  = {quant-ph},
+  doi           = {10.48550/arXiv.2611.28945},
+  url           = {https://arxiv.org/abs/2611.28945}
+}
+```
+
+Software citation metadata is in [`CITATION.cff`](CITATION.cff).
 
 ## Acknowledgements and AI-use statement
 
+We acknowledge the use of IBM Quantum services for this work. The views expressed are those of the
+author and do not reflect the official policy or position of IBM or the IBM Quantum team.
+
 Parts of the code and documentation were developed with the assistance of an AI model (Claude,
-Anthropic). All design decisions, results and their interpretation were reviewed by the authors, who
-take full responsibility for the content.
+Anthropic). All design decisions, results and their interpretation were reviewed by the author, who
+takes full responsibility for the content.
 
 ## License
 
